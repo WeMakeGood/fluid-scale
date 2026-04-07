@@ -1,0 +1,32 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# WP-CLI local config (environment-specific)
+wp-cli.local.yml
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts
+assets/css/*.min.css
+assets/js/*.min.js
+
+# Archives / exports
+*.sql
+*.tar.gz
+*.zip
+
+# phpcs/phpunit configs are environment-specific
+phpcs.xml
+phpunit.xml
+
+# Logs
+*.log
