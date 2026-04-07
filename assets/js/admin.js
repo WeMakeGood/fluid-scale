@@ -151,16 +151,17 @@
 			const clampVal = typeClamp( step, params );
 			const px       = typeClampAtViewport( step, params, PREVIEW_VIEWPORT );
 			const name     = step < 0 ? `--step-${ step }` : `--step-${ step }`;
-			const label    = step < 0 ? `step-${step}` : `step-${step}`;
 
+			// Use computed px directly so the rendered size matches the label,
+			// regardless of the admin window width.
 			rows.push( `
 				<div class="fs-specimen-row">
 					<div class="fs-specimen-meta">
 						<code class="fs-specimen-name">${ escHtml( name ) }</code>
-						<span class="fs-specimen-px">${ px }px @ ${ PREVIEW_VIEWPORT }px viewport</span>
+						<span class="fs-specimen-px">${ px }px @ ${ PREVIEW_VIEWPORT }px</span>
 						<code class="fs-specimen-clamp">${ escHtml( clampVal ) }</code>
 					</div>
-					<div class="fs-specimen-text" style="font-size: ${ escHtml( clampVal ) }">Aa</div>
+					<div class="fs-specimen-text" style="font-size: ${ px }px">Aa</div>
 				</div>
 			` );
 		}
