@@ -1,115 +1,135 @@
 === Fluid Scale ===
-Contributors: (this should be a list of wordpress.org userid's)
-Donate link: https://example.com/
-Tags: comments, spam
-Requires at least: 4.5
-Tested up to: 6.9.4
-Requires PHP: 5.6
-Stable tag: 0.1.0
-License: GPLv2 or later
+Contributors: wemakegood
+Tags: typography, fluid, css, custom-properties, utopia
+Requires at least: 6.0
+Tested up to: 6.8
+Requires PHP: 8.0
+Stable tag: 1.0.0
+License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Here is a short description of the plugin.  This should be no more than 150 characters.  No markup here.
+Injects a complete Utopia fluid design system — type, space, and grid — as CSS custom properties available to any theme or page builder.
 
 == Description ==
 
-This is the long description.  No limit, and you can use Markdown (as well as in the following sections).
+Fluid Scale generates a mathematically coherent set of CSS custom properties based on the [Utopia](https://utopia.fyi) fluid design system, created by James Gilyead and Trys Mudford. The custom properties are injected as a static stylesheet before any theme or builder CSS runs, making them available everywhere on your site without any per-component configuration.
 
-For backwards compatibility, if this section is missing, the full length of the short description will be used, and
-Markdown parsed.
+= What It Generates =
 
-A few notes about the sections above:
+**Fluid type scale** — a set of `--step-*` variables that interpolate smoothly between a small-screen and large-screen modular scale. No breakpoints. No manual size definitions per element.
 
-*   "Contributors" is a comma separated list of wp.org/wp-plugins.org usernames
-*   "Tags" is a comma separated list of tags that apply to the plugin
-*   "Requires at least" is the lowest version that the plugin will work on
-*   "Tested up to" is the highest version that you've *successfully used to test the plugin*. Note that it might work on
-higher versions... this is just the highest one you've verified.
-*   Stable tag should indicate the Subversion "tag" of the latest stable version, or "trunk," if you use `/trunk/` for
-stable.
+**Fluid space scale** — a set of `--space-*` variables derived from the same base as the type scale, covering everything from `--space-3xs` through `--space-3xl`. Also generates one-up pairs (`--space-s-m`, etc.) and any custom pairs you define.
 
-    Note that the `readme.txt` of the stable tag is the one that is considered the defining one for the plugin, so
-if the `/trunk/readme.txt` file says that the stable tag is `4.3`, then it is `/tags/4.3/readme.txt` that'll be used
-for displaying information about the plugin.  In this situation, the only thing considered from the trunk `readme.txt`
-is the stable tag pointer.  Thus, if you develop in trunk, you can update the trunk `readme.txt` to reflect changes in
-your in-development version, without having that information incorrectly disclosed about the current stable version
-that lacks those changes -- as long as the trunk's `readme.txt` points to the correct stable tag.
+**Grid variables** — `--grid-max-width`, `--grid-gutter`, and `--grid-columns`, plus `.u-container` and `.u-grid` utility classes.
 
-    If no stable tag is provided, it is assumed that trunk is stable, but you should specify "trunk" if that's where
-you put the stable version, in order to eliminate any doubt.
+= How It Works =
+
+1. Configure your scale in **Settings > Fluid Scale**: set your viewport range, base sizes, ratio, and any custom space pairs.
+2. The plugin calculates the `clamp()` values and writes them to a static CSS file in your uploads directory.
+3. That file is enqueued before your theme loads — every element on every page has access to the variables immediately.
+4. Use the variables in your theme, page builder custom CSS, or any stylesheet: `font-size: var(--step-2);`, `padding: var(--space-m);`
+
+= Type Scale Variables =
+
+```
+--step--2   Smallest (e.g. fine print)
+--step--1   Small (e.g. captions)
+--step-0    Base body size
+--step-1    Slightly larger
+--step-2    Subheadings
+--step-3    Headings
+--step-4    Large headings
+--step-5    Display / hero
+```
+
+Semantic aliases are also generated: `--fs-body`, `--fs-h1` through `--fs-h6`, `--fs-xs` through `--fs-3xl`.
+
+= Space Scale Variables =
+
+```
+--space-3xs  --space-2xs  --space-xs
+--space-s    --space-m    --space-l
+--space-xl   --space-2xl  --space-3xl
+```
+
+One-up pairs (`--space-xs-s`, `--space-s-m`, etc.) and custom pairs you define are also generated.
+
+= Builder Compatibility =
+
+Fluid Scale works with any theme or page builder. Divi 5 and Bricks Builder users can enable automatic variable mapping from the settings page — the plugin detects which builder is active and offers to generate a mapping block that connects the canonical scale variables to the builder's own variable system.
+
+= Caching Compatible =
+
+The generated CSS is a static file served from your uploads directory. It is fully compatible with WP Rocket, W3 Total Cache, and CDN setups. The file is only regenerated when you save new settings, and the enqueued stylesheet URL includes a version parameter that changes on each save to bust CDN caches.
+
+= Credit =
+
+This plugin implements the fluid design system methodology developed by [Utopia](https://utopia.fyi) (James Gilyead and Trys Mudford). The modular scale concept builds on earlier work by Tim Brown ([Modular Scale](https://www.modularscale.com)). The math is an independent implementation; no Utopia code is included.
 
 == Installation ==
 
-This section describes how to install the plugin and get it working.
-
-e.g.
-
-1. Upload `plugin-name.php` to the `/wp-content/plugins/` directory
-1. Activate the plugin through the 'Plugins' menu in WordPress
-1. Place `<?php do_action('plugin_name_hook'); ?>` in your templates
+1. Upload the `fluid-scale` directory to `/wp-content/plugins/`.
+2. Activate the plugin through the **Plugins** screen in WordPress.
+3. Navigate to **Settings > Fluid Scale** to configure your scale.
+4. The default settings produce a good result for most sites without any changes — save once to generate the CSS file.
 
 == Frequently Asked Questions ==
 
-= A question that someone might have =
+= Do I need to know what a modular scale is? =
 
-An answer to that question.
+No. The default settings produce a harmonious type and space scale that works well for most WordPress sites. You only need to understand the parameters if you want to customize beyond the defaults.
 
-= What about foo bar? =
+= Will this work with my theme? =
 
-Answer to foo bar dilemma.
+Yes. The plugin injects CSS custom properties into `:root`, which makes them available globally. Any theme or builder that accepts CSS can reference them. The plugin does not modify your theme's CSS.
+
+= Will this work with my page builder? =
+
+Any builder that supports custom CSS can use these variables. Divi 5 and Bricks Builder users also get automatic variable mapping — the plugin can map the scale variables to the names your builder expects.
+
+= How do I use the variables? =
+
+In any CSS context (theme stylesheet, builder Custom CSS field, child theme, Additional CSS): `font-size: var(--step-3);` or `margin-bottom: var(--space-m);`.
+
+= What happens if I deactivate the plugin? =
+
+The generated CSS file stops being enqueued. Any styles that referenced the custom properties will fall back to the browser's default or inherit from a parent element. Nothing is deleted on deactivation.
+
+= What happens if I delete the plugin? =
+
+The uninstaller removes all plugin settings from the database and deletes the generated CSS file from your uploads directory. Nothing is left behind.
+
+= Is this the same as Utopia's calculator? =
+
+The math produces identical results to Utopia's calculator. This plugin is not affiliated with Utopia — it is an independent implementation of the same principles that automates the output and injects it into WordPress without any copy-paste step.
 
 == Screenshots ==
 
-1. This screen shot description corresponds to screenshot-1.(png|jpg|jpeg|gif). Note that the screenshot is taken from
-the /assets directory or the directory that contains the stable readme.txt (tags or trunk). Screenshots in the /assets
-directory take precedence. For example, `/assets/screenshot-1.png` would win over `/tags/4.3/screenshot-1.png`
-(or jpg, jpeg, gif).
-2. This is the second screen shot
+1. Settings page — configure viewport range, base sizes, ratio, and custom space pairs.
+2. Type specimen preview — see each step rendered at a representative viewport before saving.
+3. Space scale preview — visual representation of the spacing system.
+4. Generated CSS — the readonly output showing the full set of custom properties.
 
 == Changelog ==
 
-= 1.0 =
-* A change since the previous version.
-* Another change.
-
-= 0.5 =
-* List versions from most recent at top to oldest at bottom.
+= 1.0.0 =
+* Initial release.
+* Fluid type scale: `--step--2` through `--step-5` with semantic aliases.
+* Fluid space scale: `--space-3xs` through `--space-3xl`, one-up pairs, custom pairs.
+* Grid variables and utility classes.
+* Live admin preview (type specimen and space visualization).
+* Divi 5 and Bricks Builder detection and variable mapping.
+* Static file output, fully caching-compatible.
 
 == Upgrade Notice ==
 
-= 1.0 =
-Upgrade notices describe the reason a user should upgrade.  No more than 300 characters.
+= 1.0.0 =
+Initial release.
 
-= 0.5 =
-This version fixes a security related bug.  Upgrade immediately.
+== Planned for Future Versions ==
 
-== Arbitrary section ==
-
-You may provide arbitrary sections, in the same format as the ones above.  This may be of use for extremely complicated
-plugins where more information needs to be conveyed that doesn't fit into the categories of "description" or
-"installation."  Arbitrary sections will be shown below the built-in sections outlined above.
-
-== A brief Markdown Example ==
-
-Ordered list:
-
-1. Some feature
-1. Another feature
-1. Something else about the plugin
-
-Unordered list:
-
-* something
-* something else
-* third thing
-
-Here's a link to [WordPress](https://wordpress.org/ "Your favorite software") and one to [Markdown's Syntax Documentation][markdown syntax].
-Titles are optional, naturally.
-
-[markdown syntax]: https://daringfireball.net/projects/markdown/syntax
-            "Markdown is what the parser uses to process much of the readme file"
-
-Markdown uses email style notation for blockquotes and I've been told:
-> Asterisks for *emphasis*. Double it up  for **strong**.
-
-`<?php code(); // goes in backticks ?>`
+* Fluid spacing scale exposed as standalone spacing tokens for block editor
+* Container query (`cqi`) unit support
+* WP-CLI commands for regenerating the CSS file from the command line
+* REST API endpoint for retrieving the current scale configuration
+* Additional builder mapping profiles
