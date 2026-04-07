@@ -174,19 +174,22 @@
 
 		const rows = [];
 
+		// Find largest multiplier for proportional bar widths
+		const maxMult = Math.max( ...Object.values( SPACE_MULTIPLIERS ) );
+
 		for ( const [ name, mult ] of Object.entries( SPACE_MULTIPLIERS ) ) {
-			const clampVal = spaceClamp( mult, params );
-			const pxMin    = Math.round( params.minBase * mult * 10 ) / 10;
-			const pxMax    = Math.round( params.maxBase * mult * 10 ) / 10;
+			const pxMin  = Math.round( params.minBase * mult * 10 ) / 10;
+			const pxMax  = Math.round( params.maxBase * mult * 10 ) / 10;
+			const barPct = Math.round( ( mult / maxMult ) * 100 );
 
 			rows.push( `
 				<div class="fs-space-row">
 					<div class="fs-space-meta">
 						<code class="fs-specimen-name">--space-${ escHtml( name ) }</code>
-						<span class="fs-specimen-px">${ pxMin }px → ${ pxMax }px</span>
+						<span class="fs-specimen-px">${ pxMin }–${ pxMax }px</span>
 					</div>
 					<div class="fs-space-bar-wrap">
-						<div class="fs-space-bar" style="width: ${ escHtml( clampVal ) }; height: 1rem; background: var(--wp-admin-theme-color, #2271b1); opacity: 0.6;"></div>
+						<div class="fs-space-bar" style="width: ${ barPct }%"></div>
 					</div>
 				</div>
 			` );
@@ -200,6 +203,28 @@
 		if ( ! params ) { return; }
 		renderTypePreview( params );
 		renderSpacePreview( params );
+	}
+
+	// -------------------------------------------------------------------------
+	// Tab switching
+	// -------------------------------------------------------------------------
+
+	function initTabs() {
+		const tabs = document.querySelectorAll( '.fs-tab' );
+		tabs.forEach( function ( tab ) {
+			tab.addEventListener( 'click', function () {
+				tabs.forEach( function ( t ) {
+					t.classList.remove( 'fs-tab--active' );
+					t.setAttribute( 'aria-selected', 'false' );
+					const panel = document.getElementById( t.getAttribute( 'aria-controls' ) );
+					if ( panel ) { panel.hidden = true; }
+				} );
+				tab.classList.add( 'fs-tab--active' );
+				tab.setAttribute( 'aria-selected', 'true' );
+				const activePanel = document.getElementById( tab.getAttribute( 'aria-controls' ) );
+				if ( activePanel ) { activePanel.hidden = false; }
+			} );
+		} );
 	}
 
 	// -------------------------------------------------------------------------
@@ -261,6 +286,7 @@
 			} );
 		} );
 
+		initTabs();
 		initPairsUI();
 		renderPreview(); // Initial render on page load
 	}
