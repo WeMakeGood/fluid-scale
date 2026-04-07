@@ -5,6 +5,9 @@
  * Built for typographers. Vercel-inspired: clean, high-contrast, minimal chrome.
  */
 
+/* Hide Alpine elements before init to prevent flash */
+[x-cloak] { display: none !important; }
+
 /* ------------------------------------------------------------------ */
 /* Design tokens                                                         */
 /* ------------------------------------------------------------------ */
@@ -419,31 +422,49 @@
 /* ------------------------------------------------------------------ */
 
 .fs-preview-col {
-	position: sticky;
-	top: 32px;
 }
 
 .fs-preview-shell {
-	background: var(--fs-preview-bg);
 	border-radius: var(--fs-radius);
 	overflow: hidden;
-	color: var(--fs-preview-text);
+	/* dark mode (default) */
+	--shell-bg:         #18181b;
+	--shell-text:       #fafafa;
+	--shell-dim:        #a1a1aa;
+	--shell-border:     #27272a;
+	--shell-surface:    #27272a;
+	--shell-insp-bg:    #09090b;
+	background: var(--shell-bg);
+	color: var(--shell-text);
+}
+
+.fs-preview-shell--light {
+	--shell-bg:         #ffffff;
+	--shell-text:       #18181b;
+	--shell-dim:        #71717a;
+	--shell-border:     #e4e4e7;
+	--shell-surface:    #f4f4f5;
+	--shell-insp-bg:    #fafafa;
 }
 
 /* Tab bar */
 .fs-preview-tabs {
 	display: flex;
 	align-items: center;
-	border-bottom: 1px solid #27272a;
-	padding: 0 16px;
+	border-bottom: 1px solid var(--shell-border);
+	padding: 0 8px;
 	gap: 0;
 }
 
+.fs-preview-tabs-spacer {
+	flex: 1;
+}
+
 .fs-preview-tab {
-	padding: 10px 14px;
+	padding: 10px 12px;
 	font-size: 12px;
 	font-weight: 500;
-	color: var(--fs-preview-dim);
+	color: var(--shell-dim);
 	background: none;
 	border: none;
 	border-bottom: 2px solid transparent;
@@ -453,21 +474,40 @@
 	font-family: var(--fs-font);
 }
 
-.fs-preview-tab:hover {
-	color: var(--fs-preview-text);
+.fs-preview-tab:hover,
+.fs-preview-tab--active {
+	color: var(--shell-text);
 }
 
-.fs-preview-tab[aria-selected="true"] {
-	color: var(--fs-preview-text);
+.fs-preview-tab--active {
 	border-bottom-color: var(--fs-insp-accent);
+}
+
+.fs-preview-mode-toggle {
+	padding: 6px 10px;
+	font-size: 14px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--shell-dim);
+	border-radius: var(--fs-radius-sm);
+	transition: color 0.1s, background 0.1s;
+	font-family: var(--fs-font);
+	line-height: 1;
+}
+
+.fs-preview-mode-toggle:hover {
+	color: var(--shell-text);
+	background: var(--shell-surface);
 }
 
 .fs-preview-vp-note {
 	font-size: 11px;
-	color: #52525b;
+	color: var(--shell-dim);
 	padding: 6px 16px;
-	border-bottom: 1px solid #27272a;
+	border-bottom: 1px solid var(--shell-border);
 	font-family: var(--fs-mono);
+	margin: 0;
 }
 
 /* ------------------------------------------------------------------ */
@@ -475,8 +515,8 @@
 /* ------------------------------------------------------------------ */
 
 .fs-inspector {
-	background: var(--fs-insp-bg);
-	border-top: 1px solid var(--fs-insp-border);
+	background: var(--shell-insp-bg);
+	border-top: 1px solid var(--shell-border);
 	padding: 12px 16px;
 	font-family: var(--fs-mono);
 	font-size: 11px;
@@ -491,14 +531,14 @@
 }
 
 .fs-inspector-var {
-	color: #f4f4f5;
+	color: var(--shell-text);
 	font-size: 13px;
 	font-weight: 600;
 	margin-bottom: 4px;
 }
 
 .fs-inspector-clamp {
-	color: #71717a;
+	color: var(--shell-dim);
 	word-break: break-all;
 	line-height: 1.5;
 }
@@ -512,10 +552,11 @@
 /* Mockup preview                                                         */
 /* ------------------------------------------------------------------ */
 
+.fs-preview-content {
+}
+
 .fs-mockup {
 	padding: 32px 28px;
-	max-height: calc( 100vh - 200px );
-	overflow-y: auto;
 }
 
 /* Clickable token elements in mockup */
@@ -532,11 +573,74 @@
 	outline-color: var(--fs-insp-accent);
 }
 
+/* Mockup typography — scoped under .fs-preview-shell to beat WP admin specificity.
+   All font sizes use the live CSS custom properties injected by x-effect="mockupVars". */
+.fs-preview-shell .fs-mock-h1 {
+	font-size: var(--step-5);
+	font-family: 'Inter', sans-serif;
+	line-height: 1.1;
+	color: var(--shell-text);
+	margin: 0 0 var(--space-m);
+}
+
+.fs-preview-shell .fs-mock-h2 {
+	font-size: var(--step-3);
+	font-family: 'Inter', sans-serif;
+	line-height: 1.2;
+	color: var(--shell-text);
+	margin: 0 0 var(--space-s);
+}
+
+.fs-preview-shell .fs-mock-h3 {
+	font-size: var(--step-1);
+	font-family: 'Inter', sans-serif;
+	line-height: 1.3;
+	color: var(--shell-text);
+	margin: 0 0 var(--space-xs);
+}
+
+.fs-preview-shell .fs-mock-h3-large {
+	font-size: var(--step-2);
+	font-family: 'Inter', sans-serif;
+	line-height: 1.3;
+	color: var(--shell-text);
+	margin: 0 0 var(--space-s);
+}
+
+.fs-preview-shell .fs-mock-lead {
+	font-size: var(--step-1);
+	color: var(--shell-dim);
+	line-height: 1.5;
+	margin: 0 0 var(--space-l);
+}
+
+.fs-preview-shell .fs-mock-body {
+	font-size: var(--step-0);
+	color: var(--shell-dim);
+	line-height: 1.75;
+	margin: 0 0 var(--space-s);
+}
+
+.fs-preview-shell .fs-mock-small {
+	font-size: var(--step--1);
+	color: var(--shell-dim);
+	line-height: 1.6;
+	margin: 0;
+}
+
+.fs-preview-shell .fs-mock-caption {
+	font-size: var(--step--1);
+	color: var(--shell-dim);
+	line-height: 1.6;
+	font-style: italic;
+	margin: 0;
+}
+
 /* Mockup section blocks */
 .fs-mock-hero {
-	margin-bottom: 32px;
-	padding-bottom: 28px;
-	border-bottom: 1px solid #27272a;
+	margin-bottom: var(--space-l);
+	padding-bottom: var(--space-l);
+	border-bottom: 1px solid var(--shell-border);
 }
 
 .fs-mock-kicker {
@@ -545,47 +649,66 @@
 	letter-spacing: 0.1em;
 	text-transform: uppercase;
 	color: var(--fs-insp-accent);
-	margin-bottom: 12px;
+	margin-bottom: var(--space-s);
+}
+
+.fs-mock-cta-row {
+	display: flex;
+	gap: var(--space-s);
+	flex-wrap: wrap;
+}
+
+.fs-mock-btn-primary {
+	background: var(--fs-insp-accent);
+	color: #09090b;
+	padding: 8px 16px;
+	border-radius: 4px;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: default;
+}
+
+.fs-mock-btn-ghost {
+	border: 1px solid var(--shell-border);
+	color: var(--shell-dim);
+	padding: 8px 16px;
+	border-radius: 4px;
+	font-size: 13px;
+	cursor: default;
 }
 
 .fs-mock-cards {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: 16px;
-	margin-bottom: 28px;
-	padding-bottom: 28px;
-	border-bottom: 1px solid #27272a;
+	gap: var(--space-m);
+	margin-bottom: var(--space-xl);
+	padding-bottom: var(--space-l);
+	border-bottom: 1px solid var(--shell-border);
 }
 
 .fs-mock-card {
-	background: #27272a;
+	background: var(--shell-surface);
 	border-radius: var(--fs-radius-sm);
 	overflow: hidden;
 }
 
 .fs-mock-card-img {
 	height: 80px;
-	background: #3f3f46;
+	background: var(--shell-border);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #52525b;
+	color: var(--shell-dim);
 	font-size: 11px;
 	font-family: var(--fs-mono);
 }
 
 .fs-mock-card-body {
-	padding: 12px;
+	padding: var(--space-m);
 }
 
-.fs-mock-body-block p {
-	color: #a1a1aa;
-	line-height: 1.7;
-	margin: 0 0 12px;
-}
-
-.fs-mock-body-block p:last-child {
-	margin-bottom: 0;
+.fs-mock-body-block {
+	margin-bottom: var(--space-l);
 }
 
 /* ------------------------------------------------------------------ */
@@ -607,7 +730,7 @@
 
 .fs-type-row:hover,
 .fs-type-row--active {
-	background: #27272a;
+	background: var(--shell-surface);
 }
 
 .fs-type-meta {
@@ -624,13 +747,13 @@
 .fs-type-px {
 	display: block;
 	font-size: 10px;
-	color: #52525b;
+	color: var(--shell-dim);
 }
 
 .fs-type-sample {
 	flex: 1;
-	font-family: Georgia, 'Times New Roman', serif;
-	color: var(--fs-preview-text);
+	font-family: 'Inter', sans-serif;
+	color: var(--shell-text);
 	line-height: 1;
 	white-space: nowrap;
 	overflow: hidden;
@@ -655,7 +778,7 @@
 
 .fs-space-row:hover,
 .fs-space-row--active {
-	background: #27272a;
+	background: var(--shell-surface);
 }
 
 .fs-space-meta {
@@ -672,7 +795,7 @@
 .fs-space-px {
 	display: block;
 	font-size: 10px;
-	color: #52525b;
+	color: var(--shell-dim);
 }
 
 .fs-space-bar-wrap {
@@ -681,7 +804,7 @@
 
 .fs-space-bar {
 	height: 10px;
-	background: #3f3f46;
+	background: var(--shell-border);
 	border-radius: 2px;
 	position: relative;
 	overflow: hidden;

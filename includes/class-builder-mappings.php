@@ -29,10 +29,45 @@ class BuilderMappings {
 	 */
 	public static function get_mapping_css( string $builder ): string {
 		return match ( $builder ) {
-			'divi5'  => self::divi5_mapping(),
+			'divi5'  => '',  // Divi 5 mapping is output via wp_head (late priority) to win cascade — see AdminPage
 			'bricks' => self::bricks_mapping(),
 			default  => '',
 		};
+	}
+
+	/**
+	 * Generate the Divi 5 :root override block for wp_head output.
+	 *
+	 * Must run at wp_head priority 99 to land after Divi's critical inline CSS
+	 * (which writes these vars at index ~18 in the stylesheet cascade).
+	 *
+	 * Fixed mappings:
+	 *   --content-max-width   → var(--grid-max-width)   — keeps content width in sync
+	 *   --row-gutter-horizontal → var(--grid-gutter)    — replaces Divi's arbitrary 5.5%
+	 *
+	 * Configurable mappings (space steps chosen by user in settings):
+	 *   --section-padding, --section-gutter, --row-gutter-vertical, --module-gutter
+	 *
+	 * @param array $divi_mapping User-configured space step selections.
+	 */
+	public static function divi5_head_css( array $divi_mapping ): string {
+		$sp  = $divi_mapping['section_padding']     ?? 'xl';
+		$sg  = $divi_mapping['section_gutter']      ?? 'xl';
+		$rgv = $divi_mapping['row_gutter_vertical']  ?? 'l';
+		$mg  = $divi_mapping['module_gutter']        ?? 'm';
+
+		return implode( "\n", [
+			'<style id="fluid-scale-divi-mapping">',
+			':root {',
+			"\t--content-max-width:      var(--grid-max-width);",
+			"\t--row-gutter-horizontal:  var(--grid-gutter);",
+			"\t--section-padding:        var(--space-{$sp});",
+			"\t--section-gutter:         var(--space-{$sg});",
+			"\t--row-gutter-vertical:    var(--space-{$rgv});",
+			"\t--module-gutter:          var(--space-{$mg});",
+			'}',
+			'</style>',
+		] );
 	}
 
 	/**

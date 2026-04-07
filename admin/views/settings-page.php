@@ -25,7 +25,7 @@ $alpine_init = wp_json_encode( [
 	'maxVp'          => (int)    $settings['max_viewport'],
 	'minBase'        => (float)  $settings['min_base'],
 	'maxBase'        => (float)  $settings['max_base'],
-	'ratio'          => (float)  $settings['ratio'],
+	'ratio'          => (string) $settings['ratio'],
 	'negSteps'       => (int)    $settings['negative_steps'],
 	'posSteps'       => (int)    $settings['positive_steps'],
 	'gridMaxWidth'   => (int)    $settings['grid_max_width'],
@@ -33,9 +33,17 @@ $alpine_init = wp_json_encode( [
 	'gridGutter'     => $settings['grid_gutter_pair'],
 	'builderMapping' => $settings['builder_mapping'],
 	'customPairs'    => $settings['custom_pairs'],
+	'diviMapping'    => [
+		'sectionPadding'     => $settings['divi_mapping']['section_padding']     ?? 'xl',
+		'sectionGutter'      => $settings['divi_mapping']['section_gutter']      ?? 'xl',
+		'rowGutterVertical'  => $settings['divi_mapping']['row_gutter_vertical'] ?? 'l',
+		'moduleGutter'       => $settings['divi_mapping']['module_gutter']       ?? 'm',
+	],
 ] );
 ?>
-<div class="wrap fs-wrap" x-data="fluidScale( <?php echo esc_attr( $alpine_init ); ?> )">
+<!-- Pass settings to Alpine via a JS global — avoids esc_attr() corrupting JSON quotes -->
+<script>window.fluidScaleInit = <?php echo $alpine_init; // phpcs:ignore WordPress.Security.EscapeOutput ?>;</script>
+<div class="wrap fs-wrap" x-data="fluidScale( window.fluidScaleInit )">
 
 	<?php foreach ( $messages as $notice ) : ?>
 	<div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> is-dismissible">
@@ -172,7 +180,7 @@ $alpine_init = wp_json_encode( [
 						<div class="fs-field">
 							<label class="fs-label" for="fs-ratio"><?php esc_html_e( 'Ratio', 'fluid-scale' ); ?></label>
 							<div class="fs-select-wrap">
-								<select id="fs-ratio" class="fs-select" x-model.number="ratio">
+								<select id="fs-ratio" class="fs-select" x-model="ratio">
 									<option value="1.067"><?php esc_html_e( 'Minor Second (1.067) — subtle, dense UI', 'fluid-scale' ); ?></option>
 									<option value="1.125"><?php esc_html_e( 'Major Second (1.125) — gentle, content-heavy', 'fluid-scale' ); ?></option>
 									<option value="1.200"><?php esc_html_e( 'Minor Third (1.200) — balanced, safe default', 'fluid-scale' ); ?></option>
@@ -244,7 +252,18 @@ $alpine_init = wp_json_encode( [
 							<label class="fs-label" for="fs-grid-gutter"><?php esc_html_e( 'Gutter (column gap)', 'fluid-scale' ); ?></label>
 							<div class="fs-select-wrap">
 								<select id="fs-grid-gutter" class="fs-select" x-model="gridGutter">
-									<?php foreach ( Generator::ONE_UP_PAIRS as [ $from, $to ] ) :
+									<?php
+									// One-up pairs plus common wider pairs for gutter use
+									$gutter_pairs = array_map(
+										fn( $p ) => [ $p[0], $p[1] ],
+										Generator::ONE_UP_PAIRS
+									);
+									// Add common non-consecutive pairs used as gutters
+									$gutter_pairs[] = [ 'xs', 'm' ];
+									$gutter_pairs[] = [ 's', 'l' ];
+									$gutter_pairs[] = [ 's', 'xl' ];
+									$gutter_pairs[] = [ 'm', 'xl' ];
+									foreach ( $gutter_pairs as [ $from, $to ] ) :
 										$val = "{$from}-{$to}"; ?>
 									<option value="<?php echo esc_attr( $val ); ?>">
 										<?php echo esc_html( "--space-{$val}" ); ?>
@@ -328,6 +347,44 @@ $alpine_init = wp_json_encode( [
 								<span><?php esc_html_e( 'Disabled', 'fluid-scale' ); ?></span>
 							</label>
 						</div>
+
+						<?php if ( in_array( 'divi5', $builders, true ) ) : ?>
+						<div class="fs-divi-mapping" x-show="builderMapping === 'auto' || builderMapping === 'divi5'">
+							<p class="fs-help" style="margin: 16px 0 12px;">
+								<?php esc_html_e( 'Map Divi\'s layout variables to your fluid space scale. Content width and row gutter are fixed to your grid settings.', 'fluid-scale' ); ?>
+							</p>
+							<div class="fs-field-row">
+								<?php
+								$divi_fields = [
+									[ 'key' => 'section_padding',     'alpine' => 'sectionPadding',    'label' => __( 'Section padding', 'fluid-scale' ) ],
+									[ 'key' => 'section_gutter',      'alpine' => 'sectionGutter',     'label' => __( 'Section gutter', 'fluid-scale' ) ],
+									[ 'key' => 'row_gutter_vertical', 'alpine' => 'rowGutterVertical', 'label' => __( 'Row gutter (vertical)', 'fluid-scale' ) ],
+									[ 'key' => 'module_gutter',       'alpine' => 'moduleGutter',      'label' => __( 'Module gutter', 'fluid-scale' ) ],
+								];
+								foreach ( $divi_fields as $field ) :
+									$current = $settings['divi_mapping'][ $field['key'] ] ?? '';
+								?>
+								<div class="fs-field">
+									<label class="fs-label" for="fs-divi-<?php echo esc_attr( $field['key'] ); ?>"><?php echo esc_html( $field['label'] ); ?></label>
+									<div class="fs-select-wrap">
+										<select id="fs-divi-<?php echo esc_attr( $field['key'] ); ?>"
+											class="fs-select"
+											name="fluid_scale_divi_mapping[<?php echo esc_attr( $field['key'] ); ?>]"
+											x-model="diviMapping.<?php echo esc_attr( $field['alpine'] ); ?>">
+											<?php foreach ( $space_steps as $step ) : ?>
+											<option value="<?php echo esc_attr( $step ); ?>"
+												<?php selected( $current, $step ); ?>>
+												<?php echo esc_html( '--space-' . $step ); ?>
+											</option>
+											<?php endforeach; ?>
+										</select>
+									</div>
+								</div>
+								<?php endforeach; ?>
+							</div>
+						</div>
+						<?php endif; ?>
+
 					</div>
 				</div>
 				<?php endif; ?>
@@ -369,130 +426,115 @@ $alpine_init = wp_json_encode( [
 		<!-- RIGHT: LIVE PREVIEW                                           -->
 		<!-- ============================================================ -->
 		<div class="fs-preview-col">
-			<div class="fs-preview-shell">
+			<div class="fs-preview-shell" :class="previewDark ? 'fs-preview-shell--dark' : 'fs-preview-shell--light'">
 
 				<!-- Tab bar -->
 				<div class="fs-preview-tabs" role="tablist">
 					<button role="tab" class="fs-preview-tab"
 						:aria-selected="previewTab === 'mockup'"
-						:class="{ 'fs-preview-tab': true }"
-						:style="previewTab === 'mockup' ? 'color:#fafafa;border-bottom-color:#a78bfa' : ''"
+						:class="{ 'fs-preview-tab--active': previewTab === 'mockup' }"
 						@click="previewTab = 'mockup'; inspected = null">
 						<?php esc_html_e( 'Page Mockup', 'fluid-scale' ); ?>
 					</button>
 					<button role="tab" class="fs-preview-tab"
-						:style="previewTab === 'type' ? 'color:#fafafa;border-bottom-color:#a78bfa' : ''"
+						:class="{ 'fs-preview-tab--active': previewTab === 'type' }"
 						@click="previewTab = 'type'; inspected = null">
 						<?php esc_html_e( 'Type Scale', 'fluid-scale' ); ?>
 					</button>
 					<button role="tab" class="fs-preview-tab"
-						:style="previewTab === 'space' ? 'color:#fafafa;border-bottom-color:#a78bfa' : ''"
+						:class="{ 'fs-preview-tab--active': previewTab === 'space' }"
 						@click="previewTab = 'space'; inspected = null">
 						<?php esc_html_e( 'Space Scale', 'fluid-scale' ); ?>
+					</button>
+					<div class="fs-preview-tabs-spacer"></div>
+					<button type="button" class="fs-preview-mode-toggle"
+						@click="previewDark = !previewDark"
+						:title="previewDark ? '<?php esc_attr_e( 'Switch to light preview', 'fluid-scale' ); ?>' : '<?php esc_attr_e( 'Switch to dark preview', 'fluid-scale' ); ?>'">
+						<span x-text="previewDark ? '☀' : '◑'"></span>
 					</button>
 				</div>
 
 				<p class="fs-preview-vp-note"><?php esc_html_e( 'Values shown at 1024px viewport · click any element to inspect', 'fluid-scale' ); ?></p>
 
 				<!-- ==================================================== -->
-				<!-- PAGE MOCKUP TAB                                        -->
+				<!-- Tab content area (scrollable, grows to fill shell)     -->
 				<!-- ==================================================== -->
-				<div x-show="previewTab === 'mockup'" class="fs-mockup">
+				<div class="fs-preview-content">
+
+				<!-- ==================================================== -->
+				<!-- PAGE MOCKUP TAB                                        -->
+				<!-- All sizing uses CSS custom properties from the live    -->
+				<!-- <style> tag injected by x-effect="mockupVars".         -->
+				<!-- ==================================================== -->
+				<div x-show="previewTab === 'mockup'" x-cloak class="fs-mockup">
 
 					<!-- Hero -->
 					<div class="fs-mock-hero">
 						<p class="fs-mock-kicker">
 							<?php esc_html_e( 'Annual Report 2024', 'fluid-scale' ); ?>
 						</p>
-						<h1 class="fs-token"
+						<h1 class="fs-token fs-mock-h1"
 							:class="{ 'fs-token--active': inspected && inspected.variable === '--step-5' }"
-							:style="{ fontSize: stepPx(5) + 'px', fontFamily: 'Georgia, serif', lineHeight: '1.1', marginBottom: spacePx('m') + 'px', color: '#fafafa' }"
-							@click="inspect('H1 / Hero heading', '--step-5', stepClamp(5), stepPx(5))">
+							@click="inspect('H1 — hero heading', '--step-5', stepClamp(5))">
 							<?php esc_html_e( 'Building Stronger Communities Through Collective Action', 'fluid-scale' ); ?>
 						</h1>
-						<p class="fs-token"
+						<p class="fs-token fs-mock-lead"
 							:class="{ 'fs-token--active': inspected && inspected.variable === '--step-1' }"
-							:style="{ fontSize: stepPx(1) + 'px', color: '#a1a1aa', lineHeight: '1.5', marginBottom: spacePx('l') + 'px' }"
-							@click="inspect('Subheading / Lead', '--step-1', stepClamp(1), stepPx(1))">
+							@click="inspect('Lead / subheading', '--step-1', stepClamp(1))">
 							<?php esc_html_e( 'Our programs reached 14,000 individuals across 23 counties. Here\'s what we accomplished together.', 'fluid-scale' ); ?>
 						</p>
-						<div :style="{ display: 'flex', gap: spacePx('s') + 'px' }">
-							<span style="background:#a78bfa;color:#09090b;padding:8px 16px;border-radius:4px;font-size:13px;font-weight:600;cursor:default">
-								<?php esc_html_e( 'Read the Report', 'fluid-scale' ); ?>
-							</span>
-							<span style="border:1px solid #3f3f46;color:#a1a1aa;padding:8px 16px;border-radius:4px;font-size:13px;cursor:default">
-								<?php esc_html_e( 'Watch the Story', 'fluid-scale' ); ?>
-							</span>
+						<div class="fs-mock-cta-row">
+							<span class="fs-mock-btn-primary"><?php esc_html_e( 'Read the Report', 'fluid-scale' ); ?></span>
+							<span class="fs-mock-btn-ghost"><?php esc_html_e( 'Watch the Story', 'fluid-scale' ); ?></span>
 						</div>
 					</div>
 
 					<!-- Section heading -->
-					<h2 class="fs-token"
+					<h2 class="fs-token fs-mock-h2"
 						:class="{ 'fs-token--active': inspected && inspected.variable === '--step-3' }"
-						:style="{ fontSize: stepPx(3) + 'px', fontFamily: 'Georgia, serif', lineHeight: '1.2', marginBottom: spacePx('s') + 'px', color: '#fafafa' }"
-						@click="inspect('H2 / Section heading', '--step-3', stepClamp(3), stepPx(3))">
+						@click="inspect('H2 — section heading', '--step-3', stepClamp(3))">
 						<?php esc_html_e( 'Program Areas', 'fluid-scale' ); ?>
 					</h2>
 
 					<!-- Cards -->
-					<div class="fs-mock-cards"
-						:style="{ gap: spacePx('m') + 'px', marginBottom: spacePx('xl') + 'px' }">
-
+					<div class="fs-mock-cards">
 						<div class="fs-mock-card fs-token"
 							:class="{ 'fs-token--active': inspected && inspected.variable === '--space-m' }"
-							@click="inspect('Card padding', '--space-m', '', spacePx('m'))">
-							<div class="fs-mock-card-img">
-								<span style="font-family:monospace;font-size:10px;color:#52525b">16:9 image</span>
-							</div>
-							<div class="fs-mock-card-body" :style="{ padding: spacePx('m') + 'px' }">
-								<h3 :style="{ fontSize: stepPx(1) + 'px', fontFamily: 'Georgia, serif', color: '#fafafa', marginBottom: spacePx('xs') + 'px', lineHeight: '1.3' }">
-									<?php esc_html_e( 'Housing Stability', 'fluid-scale' ); ?>
-								</h3>
-								<p :style="{ fontSize: stepPx(-1) + 'px', color: '#71717a', lineHeight: '1.6', margin: 0 }">
-									<?php esc_html_e( 'Preventing evictions and connecting families to emergency rental assistance across the region.', 'fluid-scale' ); ?>
-								</p>
+							@click="inspect('Card padding', '--space-m', spaceClamp(1.5))">
+							<div class="fs-mock-card-img"><span><?php esc_html_e( '16:9 image', 'fluid-scale' ); ?></span></div>
+							<div class="fs-mock-card-body">
+								<h3 class="fs-mock-h3"><?php esc_html_e( 'Housing Stability', 'fluid-scale' ); ?></h3>
+								<p class="fs-mock-small"><?php esc_html_e( 'Preventing evictions and connecting families to emergency rental assistance across the region.', 'fluid-scale' ); ?></p>
 							</div>
 						</div>
-
 						<div class="fs-mock-card fs-token"
 							:class="{ 'fs-token--active': inspected && inspected.variable === '--space-m' }"
-							@click="inspect('Card padding', '--space-m', '', spacePx('m'))">
-							<div class="fs-mock-card-img">
-								<span style="font-family:monospace;font-size:10px;color:#52525b">16:9 image</span>
-							</div>
-							<div class="fs-mock-card-body" :style="{ padding: spacePx('m') + 'px' }">
-								<h3 :style="{ fontSize: stepPx(1) + 'px', fontFamily: 'Georgia, serif', color: '#fafafa', marginBottom: spacePx('xs') + 'px', lineHeight: '1.3' }">
-									<?php esc_html_e( 'Workforce Development', 'fluid-scale' ); ?>
-								</h3>
-								<p :style="{ fontSize: stepPx(-1) + 'px', color: '#71717a', lineHeight: '1.6', margin: 0 }">
-									<?php esc_html_e( 'Job training and placement programs with a 78% 90-day employment retention rate.', 'fluid-scale' ); ?>
-								</p>
+							@click="inspect('Card padding', '--space-m', spaceClamp(1.5))">
+							<div class="fs-mock-card-img"><span><?php esc_html_e( '16:9 image', 'fluid-scale' ); ?></span></div>
+							<div class="fs-mock-card-body">
+								<h3 class="fs-mock-h3"><?php esc_html_e( 'Workforce Development', 'fluid-scale' ); ?></h3>
+								<p class="fs-mock-small"><?php esc_html_e( 'Job training and placement programs with a 78% 90-day employment retention rate.', 'fluid-scale' ); ?></p>
 							</div>
 						</div>
 					</div>
 
-					<!-- Body copy block -->
+					<!-- Body copy -->
 					<div class="fs-mock-body-block">
-						<h3 class="fs-token"
+						<h3 class="fs-token fs-mock-h3-large"
 							:class="{ 'fs-token--active': inspected && inspected.variable === '--step-2' }"
-							:style="{ fontSize: stepPx(2) + 'px', fontFamily: 'Georgia, serif', color: '#fafafa', marginBottom: spacePx('s') + 'px', lineHeight: '1.3' }"
-							@click="inspect('H3 / Article subheading', '--step-2', stepClamp(2), stepPx(2))">
+							@click="inspect('H3 — article subheading', '--step-2', stepClamp(2))">
 							<?php esc_html_e( 'A Message From Our Executive Director', 'fluid-scale' ); ?>
 						</h3>
-						<p class="fs-token"
+						<p class="fs-token fs-mock-body"
 							:class="{ 'fs-token--active': inspected && inspected.variable === '--step-0' }"
-							:style="{ fontSize: stepPx(0) + 'px', color: '#a1a1aa', lineHeight: '1.75', marginBottom: spacePx('s') + 'px' }"
-							@click="inspect('Body text', '--step-0', stepClamp(0), stepPx(0))">
+							@click="inspect('Body text', '--step-0', stepClamp(0))">
 							<?php esc_html_e( 'This year tested our resilience in ways we did not anticipate. Rising costs, increased demand for services, and a shifting funding landscape required us to adapt quickly. And we did — because of you.', 'fluid-scale' ); ?>
 						</p>
-						<p :style="{ fontSize: stepPx(0) + 'px', color: '#a1a1aa', lineHeight: '1.75', marginBottom: spacePx('s') + 'px' }">
-							<?php esc_html_e( 'The numbers in this report represent real people. Families who stayed in their homes. Individuals who found stable employment. Children whose futures look brighter because this community showed up.', 'fluid-scale' ); ?>
-						</p>
-						<p class="fs-token"
+						<p class="fs-mock-body"><?php esc_html_e( 'The numbers in this report represent real people. Families who stayed in their homes. Individuals who found stable employment. Children whose futures look brighter because this community showed up.', 'fluid-scale' ); ?></p>
+						<p class="fs-token fs-mock-caption"
 							:class="{ 'fs-token--active': inspected && inspected.variable === '--step--1' }"
-							:style="{ fontSize: stepPx(-1) + 'px', color: '#71717a', lineHeight: '1.6', fontStyle: 'italic' }"
-							@click="inspect('Caption / small text', '--step--1', stepClamp(-1), stepPx(-1))">
-							<?php esc_html_e( '— Dr. Maria Santos, Executive Director. Photography by James Okafor. Annual Report design by the Communications Team.', 'fluid-scale' ); ?>
+							@click="inspect('Caption / small text', '--step--1', stepClamp(-1))">
+							<?php esc_html_e( '— Dr. Maria Santos, Executive Director. Photography by James Okafor.', 'fluid-scale' ); ?>
 						</p>
 					</div>
 
@@ -501,18 +543,17 @@ $alpine_init = wp_json_encode( [
 				<!-- ==================================================== -->
 				<!-- TYPE SCALE TAB                                         -->
 				<!-- ==================================================== -->
-				<div x-show="previewTab === 'type'" style="display:none">
+				<div x-show="previewTab === 'type'" x-cloak>
 					<div class="fs-type-list">
 						<template x-for="step in typeSteps" :key="step.n">
 							<div class="fs-type-row"
 								:class="{ 'fs-type-row--active': inspected && inspected.variable === step.name }"
-								@click="inspect(step.name, step.name, step.clamp, step.px)">
+								@click="inspect(step.name, step.name, step.clamp)">
 								<div class="fs-type-meta">
 									<code class="fs-type-name" x-text="step.name"></code>
-									<span class="fs-type-px" x-text="step.px + 'px'"></span>
 								</div>
 								<div class="fs-type-sample"
-									:style="{ fontSize: step.px + 'px' }">
+									:style="{ fontSize: 'var(' + step.name + ')' }">
 									The quick brown fox
 								</div>
 							</div>
@@ -523,12 +564,12 @@ $alpine_init = wp_json_encode( [
 				<!-- ==================================================== -->
 				<!-- SPACE SCALE TAB                                        -->
 				<!-- ==================================================== -->
-				<div x-show="previewTab === 'space'" style="display:none">
+				<div x-show="previewTab === 'space'" x-cloak>
 					<div class="fs-space-list">
 						<template x-for="step in spaceSteps" :key="step.key">
 							<div class="fs-space-row"
 								:class="{ 'fs-space-row--active': inspected && inspected.variable === step.name }"
-								@click="inspect(step.name, step.name, step.clamp, step.pxAt)">
+								@click="inspect(step.name, step.name, step.clamp)">
 								<div class="fs-space-meta">
 									<code class="fs-space-name" x-text="step.name"></code>
 									<span class="fs-space-px" x-text="step.pxMin + '–' + step.pxMax + 'px'"></span>
@@ -543,14 +584,15 @@ $alpine_init = wp_json_encode( [
 					</div>
 				</div>
 
+				</div><!-- .fs-preview-content -->
+
 				<!-- ==================================================== -->
-				<!-- INSPECTOR (always visible when something is selected)  -->
+				<!-- INSPECTOR (pinned to bottom of preview shell)         -->
 				<!-- ==================================================== -->
-				<div class="fs-inspector" x-show="inspected" style="display:none">
+				<div class="fs-inspector" x-show="inspected" x-cloak>
 					<p class="fs-inspector-label"><?php esc_html_e( 'Inspector', 'fluid-scale' ); ?></p>
 					<p class="fs-inspector-var" x-text="inspected && inspected.variable"></p>
-					<p class="fs-inspector-clamp" x-text="inspected && inspected.clamp" x-show="inspected && inspected.clamp"></p>
-					<p class="fs-inspector-px" x-text="inspected && inspected.px + 'px @ 1024px viewport'"></p>
+					<p class="fs-inspector-clamp" x-text="inspected && inspected.clamp"></p>
 				</div>
 
 			</div><!-- .fs-preview-shell -->

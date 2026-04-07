@@ -51,27 +51,36 @@ class AdminPage {
 		}
 
 		wp_enqueue_style(
+			'fluid-scale-inter',
+			'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+			[],
+			null
+		);
+
+		wp_enqueue_style(
 			'fluid-scale-admin',
 			FLUID_SCALE_URL . 'assets/css/admin.css',
-			[],
+			[ 'fluid-scale-inter' ],
 			FLUID_SCALE_VERSION
 		);
 
-		// Alpine must load before admin.js registers its x-data component.
-		// defer is added automatically by WordPress for scripts in the footer.
+		// admin.js must run BEFORE Alpine initialises so the component is registered.
+		// Load admin.js first (no Alpine dependency at enqueue time), then Alpine.
+		// admin.js listens for 'alpine:init' which fires before Alpine scans the DOM.
+		// WordPress outputs footer scripts in registration order, so admin.js comes first.
 		wp_enqueue_script(
-			'alpine',
-			FLUID_SCALE_URL . 'assets/js/alpine.min.js',
+			'fluid-scale-admin',
+			FLUID_SCALE_URL . 'assets/js/admin.js',
 			[],
-			'3.14.9',
+			FLUID_SCALE_VERSION,
 			true
 		);
 
 		wp_enqueue_script(
-			'fluid-scale-admin',
-			FLUID_SCALE_URL . 'assets/js/admin.js',
-			[ 'alpine' ],
-			FLUID_SCALE_VERSION,
+			'alpine',
+			FLUID_SCALE_URL . 'assets/js/alpine.min.js',
+			[ 'fluid-scale-admin' ],
+			'3.14.9',
 			true
 		);
 	}
@@ -84,10 +93,10 @@ class AdminPage {
 			return;
 		}
 
-		$settings  = Settings::get();
-		$builders  = BuilderDetector::get_active_builders();
+		$settings    = Settings::get();
+		$builders    = BuilderDetector::get_active_builders();
 		$file_exists = FileWriter::exists();
-		$messages  = $this->get_admin_notices();
+		$messages    = $this->get_admin_notices();
 
 		include FLUID_SCALE_DIR . 'admin/views/settings-page.php';
 	}
@@ -109,6 +118,11 @@ class AdminPage {
 
 		// Parse custom pairs from the paired arrays posted by the form
 		$raw['custom_pairs'] = $this->parse_custom_pairs_from_post( $_POST );
+
+		// Parse divi_mapping from POST
+		$raw['divi_mapping'] = is_array( $_POST['fluid_scale_divi_mapping'] ?? null )
+			? $_POST['fluid_scale_divi_mapping']
+			: [];
 
 		$settings = Settings::save( $raw );
 

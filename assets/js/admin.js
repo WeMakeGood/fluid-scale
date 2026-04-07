@@ -20,11 +20,6 @@
 		'xl': 3.0, '2xl': 4.0, '3xl': 6.0,
 	};
 
-	const ONE_UP_PAIRS = [
-		['3xs','2xs'],['2xs','xs'],['xs','s'],['s','m'],
-		['m','l'],['l','xl'],['xl','2xl'],['2xl','3xl'],
-	];
-
 	function fmt( value, unit, decimals = 4 ) {
 		let s = value.toFixed( decimals );
 		s = s.replace( /(\.\d*?)0+$/, '$1' ).replace( /\.$/, '' );
@@ -32,8 +27,10 @@
 	}
 
 	function buildClamp( minRem, maxRem, minVp, maxVp ) {
-		const slope     = ( maxRem - minRem ) / ( maxVp - minVp );
-		const intercept = minRem - slope * minVp;
+		const minPx     = minRem * 16;
+		const maxPx     = maxRem * 16;
+		const slope     = ( maxPx - minPx ) / ( maxVp - minVp );
+		const intercept = ( minPx - slope * minVp ) / 16;
 		return `clamp(${ fmt( minRem, 'rem' ) }, ${ fmt( intercept, 'rem' ) } + ${ fmt( slope * 100, 'vw' ) }, ${ fmt( maxRem, 'rem' ) })`;
 	}
 
@@ -49,19 +46,6 @@
 		return buildClamp( typeMinRem( step, p ), typeMaxRem( step, p ), p.minVp, p.maxVp );
 	}
 
-	/**
-	 * Compute the px size of a type step at a specific viewport width.
-	 * Assumes 1rem = 16px (browser default).
-	 */
-	function typePxAt( step, p, vp ) {
-		const minR  = typeMinRem( step, p );
-		const maxR  = typeMaxRem( step, p );
-		const slope = ( maxR - minR ) / ( p.maxVp - p.minVp );
-		const inter = minR - slope * p.minVp;
-		const rem   = Math.min( maxR, Math.max( minR, inter + slope * vp ) );
-		return Math.round( rem * 16 * 10 ) / 10;
-	}
-
 	function spaceMinRem( mult, p ) {
 		return parseFloat( ( p.minBase / 16 * mult ).toFixed( 4 ) );
 	}
@@ -74,13 +58,13 @@
 		return buildClamp( spaceMinRem( mult, p ), spaceMaxRem( mult, p ), p.minVp, p.maxVp );
 	}
 
-	function spacePxAt( mult, p, vp ) {
-		const minR  = spaceMinRem( mult, p );
-		const maxR  = spaceMaxRem( mult, p );
-		const slope = ( maxR - minR ) / ( p.maxVp - p.minVp );
-		const inter = minR - slope * p.minVp;
-		const rem   = Math.min( maxR, Math.max( minR, inter + slope * vp ) );
-		return Math.round( rem * 16 * 10 ) / 10;
+	// Resolve what a clamp() value equals at a specific viewport width (in px).
+	// Returns a rem string so CSS inherits correctly.
+	function resolveAt( minRem, maxRem, minVp, maxVp, vp ) {
+		const slope = ( maxRem - minRem ) / ( maxVp - minVp );
+		const inter = minRem - slope * minVp;
+		const rem   = Math.min( maxRem, Math.max( minRem, inter + slope * vp ) );
+		return fmt( rem, 'rem' );
 	}
 
 	// -------------------------------------------------------------------------
@@ -103,11 +87,13 @@
 			gridGutter:    initial.gridGutter,
 			builderMapping: initial.builderMapping,
 			customPairs:   initial.customPairs,
+			diviMapping:   initial.diviMapping,
 
 			// UI state
-			previewTab:     'mockup',   // 'mockup' | 'type' | 'space'
-			inspected:      null,       // { label, variable, clamp, px } | null
-			PREVIEW_VP:     1024,
+			previewTab:  'mockup',  // 'mockup' | 'type' | 'space'
+			previewDark: false,     // toggled by ◑/☀ button, handled via CSS class
+			inspected:   null,      // { label, variable, clamp } | null
+			previewVp:   1024,      // simulated viewport width for the preview panel
 
 			// ----------------------------------------------------------------
 			// Derived params object (shorthand for math functions)
@@ -130,12 +116,10 @@
 				const neg   = parseInt( this.negSteps ) || 2;
 				const pos   = parseInt( this.posSteps ) || 5;
 				for ( let n = -neg; n <= pos; n++ ) {
-					const px = typePxAt( n, this.p, this.PREVIEW_VP );
 					steps.push( {
 						n,
 						name:  `--step-${ n }`,
 						clamp: typeClamp( n, this.p ),
-						px,
 					} );
 				}
 				return steps;
@@ -151,32 +135,26 @@
 					clamp:  spaceClamp( mult, this.p ),
 					pxMin:  Math.round( this.p.minBase * mult * 10 ) / 10,
 					pxMax:  Math.round( this.p.maxBase * mult * 10 ) / 10,
-					pxAt:   spacePxAt( mult, this.p, this.PREVIEW_VP ),
 					barPct: Math.round( ( mult / 6 ) * 100 ), // 6 = max multiplier (3xl)
 				} ) );
 			},
 
 			// ----------------------------------------------------------------
-			// Shortcut getters for mockup template
+			// Clamp string helpers — used in inspect() calls in the template
 			// ----------------------------------------------------------------
-			stepPx( n ) {
-				return typePxAt( n, this.p, this.PREVIEW_VP );
-			},
-
-			spacePx( key ) {
-				const mult = SPACE_MULTIPLIERS[ key ] ?? 1;
-				return spacePxAt( mult, this.p, this.PREVIEW_VP );
-			},
-
 			stepClamp( n ) {
 				return typeClamp( n, this.p );
 			},
 
-			inspect( label, variable, clamp, px ) {
+			spaceClamp( mult ) {
+				return spaceClamp( mult, this.p );
+			},
+
+			inspect( label, variable, clamp ) {
 				if ( this.inspected && this.inspected.variable === variable ) {
 					this.inspected = null;
 				} else {
-					this.inspected = { label, variable, clamp, px };
+					this.inspected = { label, variable, clamp };
 				}
 			},
 
@@ -196,8 +174,9 @@
 			},
 
 			// ----------------------------------------------------------------
-			// CSS variables string for the mockup's inline style block
-			// Injected into a <style> tag in the mockup so elements can use var()
+			// CSS variables as real clamp() values — the browser resolves them.
+			// The mockup scaler sets the inner frame to previewVp px wide so vw
+			// units resolve against that width, not the real browser viewport.
 			// ----------------------------------------------------------------
 			get mockupVars() {
 				const p   = this.p;

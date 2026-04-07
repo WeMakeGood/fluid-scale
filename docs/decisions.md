@@ -39,3 +39,15 @@ Running log of non-obvious decisions and their reasoning. Add entries here when 
 ### Generator class has zero WordPress dependencies
 **Decision:** `class-generator.php` accepts a plain array and returns a string. No `get_option`, no WordPress functions.
 **Why:** Makes the generator unit-testable in isolation. Separates math from infrastructure. A contributor can improve the math without touching WordPress internals.
+
+### Divi mapping output via wp_head at priority 104, not appended to static file
+**Decision:** The Divi `:root` override block is output as an inline `<style>` tag via `wp_head` at priority 104 (registered in `fluid-scale.php`, not `AdminPage`).
+**Why:** Divi writes its layout variables (`--row-gutter-horizontal`, `--section-padding`, etc.) in two places: a linked stylesheet and an inline block output at `wp_head` priority 103 (`ET_Core_PageResource::head_late_output_cb`). The static CSS file loads too early in the cascade to win. Priority 104 guarantees our values land last. `AdminPage` is only instantiated inside `is_admin()`, so the hook was moved to the main plugin file to ensure it fires on front-end requests.
+
+### Divi mapping: opinionated defaults, user-configurable space step selects
+**Decision:** `--content-max-width` and `--row-gutter-horizontal` are fixed mappings (always map to `--grid-max-width` and `--grid-gutter`). The four space-based vars (`--section-padding`, `--section-gutter`, `--row-gutter-vertical`, `--module-gutter`) are user-configurable via selects in the Builder Mapping panel.
+**Why:** Grid vars have a single correct mapping to our grid system — no user choice makes sense. Space vars have meaningful defaults but reasonable sites differ on which step fits a section padding vs. a module gutter. Being opinionated at the default level while allowing overrides respects the design system without being prescriptive about every decision.
+
+### Divi column width calc fallbacks cannot be overridden via custom properties
+**Decision:** Document and defer. Do not attempt to override `.et_flex_column_*` width rules.
+**Why:** Divi's generated column width `calc()` expressions use `5.5%` as a hardcoded fallback value, not a custom property reference. This is baked into Divi's generated CSS and is not addressable via `:root` overrides. The correct resolution is to use Divi's Design System option group presets to align column gutters with the fluid scale — a builder-level operation outside this plugin's scope. See `docs/builder-mappings.md`.

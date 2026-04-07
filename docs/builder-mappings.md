@@ -2,120 +2,89 @@
 
 ## Overview
 
-The plugin auto-detects active builders/themes and offers to enable a mapping block that appends additional `:root {}` declarations to the generated CSS. These declarations map the plugin's canonical variables (`--step-*`, `--space-*`) to whatever variable names the builder expects.
+When a supported builder is detected, the plugin outputs a `<style>` block late in `wp_head` (priority 104) that maps Fluid Scale canonical variables to the builder's own `:root` custom property names. This block lands after all Divi-generated inline CSS, so our values win the cascade for `:root`-level vars.
 
-Detection happens in PHP at CSS generation time. The user can toggle each detected mapping on/off from the settings page.
+The user can toggle mapping on/off from the settings page. If no builder is detected, the mapping section is hidden from the UI.
 
 ---
 
-## Detection Logic
+## Cascade Strategy
 
-```php
-// Divi 5
-function is_divi5_active(): bool {
-    return defined( 'ET_CORE_VERSION' ) && version_compare( ET_CORE_VERSION, '5.0', '>=' );
-    // Also check: get_template() === 'Divi'
-}
+Divi 5 outputs its layout variables in two places:
 
-// Bricks
-function is_bricks_active(): bool {
-    return defined( 'BRICKS_VERSION' );
-    // Also check: get_template() === 'bricks'
-}
-```
+1. **`divi-dynamic-css`** (linked stylesheet, enqueued early) — sets `--row-gutter-horizontal`, `--section-padding`, etc. on `:root`
+2. **`ET_Core_PageResource::head_late_output_cb`** (priority 103) — outputs `et-critical-inline-css`, which re-sets those same vars and adds per-row generated rules
+
+Our mapping fires at `wp_head` priority **104**, after both, so our `:root` overrides win.
 
 ---
 
 ## Divi 5
 
-### Status
-Divi 5's CSS variable system generates variables dynamically from the visual builder — they are not defined in static theme files. The exact runtime variable names require verification against a live Divi 5 instance with design tokens configured.
+### Status: Verified
 
-### Known architecture
-- Divi 5 uses CSS custom properties in the visual builder, but font sizes set via the builder are per-module inline styles or generated stylesheet entries, not global `:root` tokens by default.
-- The Design Variables system (Global Design Options in Divi 5) does write to `:root`, but the exact property names depend on what the user has configured.
+Verified against live Divi 5.2.0 with Playwright. The `:root` vars below are written by Divi's critical and dynamic CSS and are successfully overridden by our mapping block.
 
-### Recommended mapping approach
-Rather than mapping to Divi's internal variables (which are builder-output, not builder-input), the Divi 5 mapping should be documented as: **use the plugin's variables inside Divi's Custom CSS fields or Global CSS**.
+### What we override
 
-Example to show in UI:
+| Divi variable | Fluid Scale mapping | Notes |
+|---|---|---|
+| `--content-max-width` | `var(--grid-max-width)` | Fixed — keeps content width in sync with plugin grid settings |
+| `--row-gutter-horizontal` | `var(--grid-gutter)` | Fixed — replaces Divi's arbitrary `5.5%` with the fluid gutter |
+| `--section-padding` | `var(--space-{user choice})` | Default: `--space-xl` |
+| `--section-gutter` | `var(--space-{user choice})` | Default: `--space-xl` |
+| `--row-gutter-vertical` | `var(--space-{user choice})` | Default: `--space-l` |
+| `--module-gutter` | `var(--space-{user choice})` | Default: `--space-m` |
+
+The four space-based mappings are configurable per-site from the Builder Mapping panel in settings.
+
+### Known limitation: column width calc fallbacks
+
+Divi's generated column width rules use hardcoded fallback values:
+
 ```css
-/* Use Fluid Scale variables in Divi 5 */
-/* In Divi > Theme Options > Custom CSS, or any module's Custom CSS: */
-h1 { font-size: var(--step-5); }
-h2 { font-size: var(--step-4); }
-p  { font-size: var(--step-0); }
-.section { padding: var(--space-l); }
-```
-
-### TODO
-- [ ] Verify whether Divi 5 Design Variables write named custom properties to `:root` that can be overridden upstream
-- [ ] Test: does a `:root { --divi-var: value; }` defined in an earlier stylesheet actually override Divi's own value?
-- [ ] If yes: document the exact Divi 5 variable names for font sizes and populate the mapping table below
-
-### Variable mapping table (UNVERIFIED — requires live Divi 5 testing)
-```css
-/* TODO: Verify these names against Divi 5 Design Variables */
-:root {
-  /* --divi-font-size-body: var(--step-0); */
-  /* --divi-font-size-xl:   var(--step-3); */
+.et_flex_column_8_24 {
+    width: calc(33.3333% - var(--horizontal-gap-parent, 5.5%) * 0.66667);
 }
 ```
+
+The `5.5%` fallback is baked into Divi's generated stylesheet — it cannot be overridden via custom properties. The actual `column-gap` on flex rows may also be set directly by per-row generated rules in `et-critical-inline-css`, bypassing the `var(--horizontal-gap)` chain.
+
+**Resolution:** Use Divi's Design System option group presets to set column gutters to match the fluid scale. This is a Divi builder operation, not something the plugin can automate.
+
+### What we don't map
+
+- `--content-width: 80%` — percentage-based, no meaningful fluid equivalent
+- `--gcid-*` color vars — outside this plugin's scope
+- Font size vars — Divi 5 sets font sizes per-module, not via `:root` tokens
 
 ---
 
 ## Bricks Builder
 
-### Status
-Bricks uses CSS custom properties for its global styles system. Variable names are stable across versions.
+### Status: Unverified
+
+Detection logic is in place. Variable name mapping requires a live Bricks install to verify.
 
 ### Detection
 ```php
-defined( 'BRICKS_VERSION' ) // Bricks defines this constant
-```
-
-### Known variable names
-Bricks global typography variables (set in Bricks > Global Styles > Typography):
-
-```css
-/* Bricks uses these in :root when global styles are configured */
---bricks-color-*       /* colors */
---bricks-space-*       /* spacing — maps well to --space-* */
+defined( 'BRICKS_VERSION' ) || get_template() === 'bricks'
 ```
 
 ### TODO
-- [ ] Inspect a live Bricks install to extract exact font-size custom property names
-- [ ] Determine if Bricks reads `:root` variables defined upstream or only its own generated ones
-- [ ] Confirm: does Bricks use `--bricks-font-size-*` naming or something else?
-
-### Placeholder mapping (to be verified)
-```css
-/* TODO: Verify against live Bricks install */
-:root {
-  /* --bricks-font-size-xl:   var(--step-4); */
-  /* --bricks-font-size-l:    var(--step-3); */
-  /* --bricks-font-size-m:    var(--step-2); */
-  /* --bricks-font-size-base: var(--step-0); */
-  /* --bricks-font-size-s:    var(--step--1); */
-}
-```
+- [ ] Install Bricks on the dev environment
+- [ ] Inspect `:root` output to confirm custom property names
+- [ ] Determine if Bricks reads upstream `:root` vars or only its own generated ones
+- [ ] Confirm naming convention (`--bricks-font-size-*` or otherwise)
+- [ ] Implement and verify mapping in `class-builder-mappings.php`
 
 ---
 
 ## Adding New Builders
 
-To add a builder definition:
-
-1. Add detection function in `includes/class-builder-detector.php`
-2. Add mapping definition in `includes/class-builder-mappings.php` as a new case
-3. Add UI label and description in the settings page builder section
-4. Document verified variable names here
-
----
-
-## Architecture Notes
-
-- Builder mappings are appended as a separate `:root {}` block *after* the canonical scale variables, so the cascade order is: plugin canonical → plugin builder aliases → theme → builder
-- The mapping block uses `var(--step-*)` references, not hardcoded values, so changing scale parameters automatically updates all mappings
-- If a builder is detected but mapping is disabled by the user, no mapping block is output
-- If no builder is detected, the mapping section is hidden from the settings page (not disabled — hidden)
+1. Add detection method in `includes/class-builder-detector.php`
+2. Add `get_active_builders()` entry
+3. Add mapping method in `includes/class-builder-mappings.php`
+4. Add `wp_head` output logic in `fluid-scale.php` (follow the Divi pattern — determine correct priority by inspecting the builder's hook priorities)
+5. Add UI label and description to the Builder Mapping panel in `admin/views/settings-page.php`
+6. Document verified variable names and any cascade limitations here

@@ -56,7 +56,9 @@ One-up pairs (`--space-xs-s`, `--space-s-m`, etc.) and custom pairs you define a
 
 = Builder Compatibility =
 
-Fluid Scale works with any theme or page builder. Divi 5 and Bricks Builder users can enable automatic variable mapping from the settings page — the plugin detects which builder is active and offers to generate a mapping block that connects the canonical scale variables to the builder's own variable system.
+Fluid Scale works with any theme or page builder. When Divi 5 is detected, the plugin automatically overrides Divi's layout variables (`--content-max-width`, `--section-padding`, `--section-gutter`, `--row-gutter-horizontal`, `--row-gutter-vertical`, `--module-gutter`) with your fluid scale values. The four space-based mappings are configurable from the Builder Mapping panel — choose which space step maps to each Divi variable. The grid variables (`--content-max-width`, `--row-gutter-horizontal`) are fixed to your plugin grid settings.
+
+Bricks Builder detection is in place; variable mapping for Bricks requires verification against a live install and is planned for a future release.
 
 = Caching Compatible =
 
@@ -85,7 +87,7 @@ Yes. The plugin injects CSS custom properties into `:root`, which makes them ava
 
 = Will this work with my page builder? =
 
-Any builder that supports custom CSS can use these variables. Divi 5 and Bricks Builder users also get automatic variable mapping — the plugin can map the scale variables to the names your builder expects.
+Any builder that supports custom CSS can use these variables directly. Divi 5 users also get automatic layout variable mapping — the plugin overrides Divi's spacing and grid defaults with fluid values from your scale. See the Builder Mapping panel in settings.
 
 = How do I use the variables? =
 
@@ -115,10 +117,11 @@ The math produces identical results to Utopia's calculator. This plugin is not a
 = 1.0.0 =
 * Initial release.
 * Fluid type scale: `--step--2` through `--step-5` with semantic aliases.
-* Fluid space scale: `--space-3xs` through `--space-3xl`, one-up pairs, custom pairs.
-* Grid variables and utility classes.
-* Live admin preview (type specimen and space visualization).
-* Divi 5 and Bricks Builder detection and variable mapping.
+* Fluid space scale: `--space-3xs` through `--space-3xl`, one-up pairs, user-defined custom pairs.
+* Grid variables (`--grid-max-width`, `--grid-gutter`, `--grid-columns`) and utility classes.
+* Live admin preview with light/dark toggle — type specimen, space scale, and page mockup tabs.
+* Divi 5 layout variable mapping: overrides `--content-max-width`, `--row-gutter-horizontal`, `--section-padding`, `--section-gutter`, `--row-gutter-vertical`, and `--module-gutter` with fluid scale values. Configurable per-site from the Builder Mapping panel.
+* Bricks Builder detection (mapping implementation planned for future release).
 * Static file output, fully caching-compatible.
 
 == Upgrade Notice ==

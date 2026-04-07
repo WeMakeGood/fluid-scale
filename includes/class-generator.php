@@ -343,8 +343,12 @@ CSS;
 	 * @return string  e.g. clamp(1.0000rem, 0.9130rem + 0.2174vw, 1.2500rem)
 	 */
 	private function build_clamp( float $min_rem, float $max_rem, int $min_vp, int $max_vp ): string {
-		$slope     = ( $max_rem - $min_rem ) / ( $max_vp - $min_vp );
-		$intercept = $min_rem - ( $slope * $min_vp );
+		// Slope is dimensionless (px/px), computed from px values so vw conversion is correct.
+		// intercept is then converted back to rem. This matches Utopia's formula exactly.
+		$min_px    = $min_rem * 16;
+		$max_px    = $max_rem * 16;
+		$slope     = ( $max_px - $min_px ) / ( $max_vp - $min_vp );
+		$intercept = ( $min_px - $slope * $min_vp ) / 16;
 
 		$slope_vw  = round( $slope * 100, 4 );
 		$intercept = round( $intercept, 4 );

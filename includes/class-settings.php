@@ -36,6 +36,12 @@ class Settings {
 			'grid_columns'     => 12,
 			'grid_gutter_pair' => 's-l',
 			'builder_mapping'  => 'auto',
+			'divi_mapping'     => [
+				'section_padding'      => 'xl',
+				'section_gutter'       => 'xl',
+				'row_gutter_vertical'  => 'l',
+				'module_gutter'        => 'm',
+			],
 			'last_generated'   => 0,
 		];
 	}
@@ -164,6 +170,16 @@ class Settings {
 			$builder_mapping = $defaults['builder_mapping'];
 		}
 
+		// Divi mapping: four space-step selects
+		$divi_defaults  = $defaults['divi_mapping'];
+		$divi_raw       = is_array( $raw['divi_mapping'] ?? null ) ? $raw['divi_mapping'] : [];
+		$divi_map_keys  = [ 'section_padding', 'section_gutter', 'row_gutter_vertical', 'module_gutter' ];
+		$divi_mapping   = [];
+		foreach ( $divi_map_keys as $key ) {
+			$val = sanitize_text_field( $divi_raw[ $key ] ?? $divi_defaults[ $key ] );
+			$divi_mapping[ $key ] = in_array( $val, $valid_steps, true ) ? $val : $divi_defaults[ $key ];
+		}
+
 		return [
 			'min_viewport'     => $min_vp,
 			'max_viewport'     => $max_vp,
@@ -177,6 +193,7 @@ class Settings {
 			'grid_columns'     => $grid_columns,
 			'grid_gutter_pair' => $grid_gutter_pair,
 			'builder_mapping'  => $builder_mapping,
+			'divi_mapping'     => $divi_mapping,
 			'last_generated'   => (int) ( $raw['last_generated'] ?? 0 ),
 		];
 	}

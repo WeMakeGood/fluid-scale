@@ -53,6 +53,35 @@ Check what's built vs. what's pending by reading the existing files in `includes
 - PHP: 8.2.29
 - GitHub CLI: `gh` — authenticated as `cfrazier`, org `wemakegood`
 - Run WP-CLI from: `/Users/chris.frazier.wemakegood.org/Local Sites/plugin-devlocal/app/public`
+- Playwright inspector: `node /Users/chris.frazier.wemakegood.org/Local\ Sites/plugin-devlocal/app/inspect.js`
+
+## Testing with Playwright
+
+A Playwright-based inspector lives at `../../../app/inspect.js` (relative to plugin root), i.e. at `/Users/chris.frazier.wemakegood.org/Local Sites/plugin-devlocal/app/inspect.js`.
+
+Use it to verify rendered CSS values, check custom properties on any page, and screenshot the result. The site uses a self-signed cert — the script handles this automatically.
+
+```bash
+# Check CSS custom properties on the front end
+node ~/path/to/inspect.js https://plugin-dev.local/sample-page/ --css-vars --screenshot
+
+# Check the admin settings page (auto-logs in)
+node ~/path/to/inspect.js "https://plugin-dev.local/wp-admin/options-general.php?page=fluid-scale" --screenshot --wait 2000
+
+# Check computed styles for a specific element
+node ~/path/to/inspect.js https://plugin-dev.local/ --selector "h1" --css-vars
+```
+
+**Key things to verify after changing the generator:**
+1. `--step-*` values are genuine clamp() with non-zero vw slope
+2. `--space-*` values scale from min_base to max_base correctly
+3. `--grid-gutter` references the correct space pair
+4. No JS console errors on the admin page
+
+**Reset settings to defaults:**
+```bash
+/Applications/Local.app/Contents/Resources/extraResources/bin/wp-cli/posix/wp option delete fluid_scale_settings --path=/Users/chris.frazier.wemakegood.org/Local\ Sites/plugin-devlocal/app/public
+```
 
 ---
 

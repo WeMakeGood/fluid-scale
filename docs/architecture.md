@@ -73,7 +73,8 @@ fluid-scale/
 - Each detection is a separate method, no side effects
 
 ### `class-builder-mappings.php` — Mapping CSS
-- `get_mapping_css( string $builder )` → returns CSS string for that builder's `:root` block
+- `get_mapping_css( string $builder )` → returns CSS string for that builder's `:root` block (currently unused for Divi 5 — see below)
+- `divi5_head_css( array $divi_mapping )` → returns an inline `<style>` block for Divi 5's layout vars
 - Data-only; no file I/O, no WP calls
 
 ### `class-admin-page.php` — Admin UI
@@ -91,7 +92,6 @@ User saves settings form
   → class-settings.php: sanitize, update_option
   → fluid_scale_settings_saved action fires
   → class-generator.php: generate CSS string from saved settings
-  → class-builder-mappings.php: append mapping blocks if enabled
   → class-file-writer.php: atomic write to uploads/fluid-scale/fluid-scale.css
   → last_generated timestamp saved
 
@@ -99,6 +99,11 @@ Front end page load
   → class-enqueue.php: wp_enqueue_style with last_generated as cache-bust version
   → Browser loads fluid-scale.css (static file, fully cacheable)
   → :root variables available to all theme and builder CSS
+  → wp_head priority 104: fluid_scale_divi_head_output() (fluid-scale.php)
+      → if Divi 5 detected and mapping enabled:
+      → class-builder-mappings.php: divi5_head_css() outputs inline <style>
+      → overrides Divi's layout vars with fluid scale values
+      → fires after ET_Core_PageResource::head_late_output_cb (priority 103)
 ```
 
 ---

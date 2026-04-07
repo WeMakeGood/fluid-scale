@@ -66,9 +66,35 @@ function fluid_scale_init(): void {
 	// Front end: enqueue the generated stylesheet.
 	( new FluidScale\Enqueue() )->init();
 
+	// Builder mapping: output Divi overrides in wp_head at priority 99,
+	// after Divi's own critical inline CSS, so our values win the cascade.
+	// Priority 104: after ET_Core_PageResource::head_late_output_cb (103) which outputs
+	// Divi's critical inline CSS containing --row-gutter-* and other layout vars.
+	add_action( 'wp_head', 'fluid_scale_divi_head_output', 104 );
+
 	// Admin: settings page and form handling.
 	if ( is_admin() ) {
 		( new FluidScale\AdminPage() )->init();
 	}
 }
 add_action( 'init', 'fluid_scale_init' );
+
+/**
+ * Output Divi 5 :root overrides late in wp_head so they land after
+ * Divi's critical inline CSS and win the cascade.
+ */
+function fluid_scale_divi_head_output(): void {
+	if ( ! FluidScale\BuilderDetector::is_divi5() ) {
+		return;
+	}
+
+	$settings        = FluidScale\Settings::get();
+	$mapping_setting = $settings['builder_mapping'] ?? 'auto';
+
+	if ( 'none' === $mapping_setting || 'bricks' === $mapping_setting ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	echo FluidScale\BuilderMappings::divi5_head_css( $settings['divi_mapping'] ?? [] );
+}
