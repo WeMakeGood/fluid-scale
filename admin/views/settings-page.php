@@ -1,14 +1,12 @@
 <?php
 /**
- * Settings page view template.
+ * Settings page view template — Alpine.js driven.
  *
- * Variables available from AdminPage::render_page():
- *   $settings    array  Current settings from Settings::get()
- *   $builders    array  Active builder slugs from BuilderDetector
- *   $file_exists bool   Whether the generated CSS file exists
- *   $messages    array  Admin notices [ ['type'=>'success|error', 'message'=>'...'] ]
- *
- * Layout: two-column. Left = form. Right = sticky preview panel.
+ * Variables injected by AdminPage::render_page():
+ *   $settings    array
+ *   $builders    array
+ *   $file_exists bool
+ *   $messages    array
  *
  * @package FluidScale
  */
@@ -19,20 +17,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$space_steps   = Generator::space_step_names();
-$ratio_options = [
-	'1.067' => __( 'Minor Second — 1.067 — Very subtle. Steps are close together. Good for dense UI.', 'fluid-scale' ),
-	'1.125' => __( 'Major Second — 1.125 — Gentle contrast. Good for content-heavy sites.', 'fluid-scale' ),
-	'1.200' => __( 'Minor Third — 1.200 — Balanced. A safe default for most sites.', 'fluid-scale' ),
-	'1.250' => __( 'Major Third — 1.250 — Clear hierarchy without being dramatic.', 'fluid-scale' ),
-	'1.333' => __( 'Perfect Fourth — 1.333 — Strong contrast. Good for editorial sites.', 'fluid-scale' ),
-	'1.414' => __( 'Augmented Fourth — 1.414 — Bold jumps between steps.', 'fluid-scale' ),
-	'1.500' => __( 'Perfect Fifth — 1.500 — Very dramatic. Use with restraint.', 'fluid-scale' ),
-	'1.618' => __( 'Golden Ratio — 1.618 — Maximum drama. Best for hero/display contexts.', 'fluid-scale' ),
-];
+$space_steps = Generator::space_step_names();
+
+// Encode settings for Alpine x-data initialisation
+$alpine_init = wp_json_encode( [
+	'minVp'          => (int)    $settings['min_viewport'],
+	'maxVp'          => (int)    $settings['max_viewport'],
+	'minBase'        => (float)  $settings['min_base'],
+	'maxBase'        => (float)  $settings['max_base'],
+	'ratio'          => (float)  $settings['ratio'],
+	'negSteps'       => (int)    $settings['negative_steps'],
+	'posSteps'       => (int)    $settings['positive_steps'],
+	'gridMaxWidth'   => (int)    $settings['grid_max_width'],
+	'gridColumns'    => (int)    $settings['grid_columns'],
+	'gridGutter'     => $settings['grid_gutter_pair'],
+	'builderMapping' => $settings['builder_mapping'],
+	'customPairs'    => $settings['custom_pairs'],
+] );
 ?>
-<div class="wrap fluid-scale-wrap">
-	<h1><?php esc_html_e( 'Fluid Scale', 'fluid-scale' ); ?></h1>
+<div class="wrap fs-wrap" x-data="fluidScale( <?php echo esc_attr( $alpine_init ); ?> )">
 
 	<?php foreach ( $messages as $notice ) : ?>
 	<div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> is-dismissible">
@@ -40,32 +43,35 @@ $ratio_options = [
 	</div>
 	<?php endforeach; ?>
 
+	<h1><?php esc_html_e( 'Fluid Scale', 'fluid-scale' ); ?></h1>
+	<p class="fs-page-desc"><?php esc_html_e( 'Configure your fluid type, space, and grid system. The preview updates live — save when it feels right.', 'fluid-scale' ); ?></p>
+
 	<?php if ( $file_exists ) : ?>
-	<p class="fluid-scale-status fluid-scale-status--ok">
+	<span class="fs-status fs-status--ok">
+		<span class="fs-status__dot"></span>
 		<?php
 		$last = (int) $settings['last_generated'];
 		printf(
 			/* translators: %s: human-readable date */
-			esc_html__( 'CSS file generated %s.', 'fluid-scale' ),
+			esc_html__( 'Generated %s', 'fluid-scale' ),
 			$last ? esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $last ) ) : esc_html__( 'previously', 'fluid-scale' )
 		);
 		?>
-	</p>
+		&nbsp;·&nbsp;
+		<a href="<?php echo esc_url( FileWriter::get_url() ); ?>" target="_blank" rel="noopener" style="color:inherit">
+			<?php esc_html_e( 'View file ↗', 'fluid-scale' ); ?>
+		</a>
+	</span>
 	<?php else : ?>
-	<p class="fluid-scale-status fluid-scale-status--warn">
-		<?php esc_html_e( 'No CSS file found. Save your settings to generate it.', 'fluid-scale' ); ?>
-	</p>
+	<span class="fs-status fs-status--warn">
+		<span class="fs-status__dot"></span>
+		<?php esc_html_e( 'No CSS file yet — save to generate', 'fluid-scale' ); ?>
+	</span>
 	<?php endif; ?>
 
-	<!-- How this works intro -->
-	<div class="fs-intro">
-		<h2 class="fs-intro-title"><?php esc_html_e( 'How this works', 'fluid-scale' ); ?></h2>
-		<p><?php esc_html_e( 'Fluid Scale generates a set of CSS custom properties — variables like --step-0, --space-m, --grid-gutter — and injects them into every page on your site before any theme or builder CSS loads. You use those variables anywhere CSS is accepted.', 'fluid-scale' ); ?></p>
-		<p><?php esc_html_e( 'The core idea: instead of defining font sizes and spacing at fixed pixel values, you define two versions of your scale — one for small screens, one for large screens — and let the browser interpolate smoothly between them. No breakpoints needed.', 'fluid-scale' ); ?></p>
-		<p><?php esc_html_e( 'The settings below define those two versions. The live preview on the right shows what the type scale looks like at a 1024px viewport. Save when you\'re happy — the preview updates instantly as you adjust values.', 'fluid-scale' ); ?></p>
-	</div>
+	<!-- Inject live CSS vars into page head so mockup can use var() -->
+	<style id="fs-live-vars" x-effect="$el.textContent = mockupVars"></style>
 
-	<!-- Two-column layout: form left, preview right -->
 	<div class="fs-layout">
 
 		<!-- ============================================================ -->
@@ -76,315 +82,480 @@ $ratio_options = [
 				<input type="hidden" name="action" value="fluid_scale_save">
 				<?php wp_nonce_field( 'fluid_scale_save_settings', 'fluid_scale_nonce' ); ?>
 
-				<!-- ================================================== -->
-				<!-- VIEWPORT RANGE                                        -->
-				<!-- ================================================== -->
-				<h2><?php esc_html_e( 'Viewport Range', 'fluid-scale' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'The smallest and largest screen widths you\'re designing for. Your scale will interpolate smoothly between these two points. Outside this range, the scale stays fixed at the min or max values.', 'fluid-scale' ); ?>
-				</p>
+				<!-- Sync Alpine state back to hidden inputs for form submission -->
+				<input type="hidden" name="fluid_scale[min_viewport]"    :value="minVp">
+				<input type="hidden" name="fluid_scale[max_viewport]"    :value="maxVp">
+				<input type="hidden" name="fluid_scale[min_base]"        :value="minBase">
+				<input type="hidden" name="fluid_scale[max_base]"        :value="maxBase">
+				<input type="hidden" name="fluid_scale[ratio]"           :value="ratio">
+				<input type="hidden" name="fluid_scale[negative_steps]"  :value="negSteps">
+				<input type="hidden" name="fluid_scale[positive_steps]"  :value="posSteps">
+				<input type="hidden" name="fluid_scale[grid_max_width]"  :value="gridMaxWidth">
+				<input type="hidden" name="fluid_scale[grid_columns]"    :value="gridColumns">
+				<input type="hidden" name="fluid_scale[grid_gutter_pair]" :value="gridGutter">
+				<input type="hidden" name="fluid_scale[builder_mapping]" :value="builderMapping">
+				<!-- Custom pairs submitted as parallel arrays via PHP loop below -->
 
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="fs-min-viewport"><?php esc_html_e( 'Smallest screen', 'fluid-scale' ); ?></label></th>
-						<td>
-							<input type="number" id="fs-min-viewport" name="fluid_scale[min_viewport]"
-								value="<?php echo esc_attr( $settings['min_viewport'] ); ?>"
-								min="1" max="2000" step="1" class="small-text fs-param"> px
-							<p class="description"><?php esc_html_e( '320px is a common mobile floor. This is where your minimum font sizes and spacing will be used.', 'fluid-scale' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="fs-max-viewport"><?php esc_html_e( 'Largest screen', 'fluid-scale' ); ?></label></th>
-						<td>
-							<input type="number" id="fs-max-viewport" name="fluid_scale[max_viewport]"
-								value="<?php echo esc_attr( $settings['max_viewport'] ); ?>"
-								min="1" max="5000" step="1" class="small-text fs-param"> px
-							<p class="description"><?php esc_html_e( '1240–1440px covers most desktop layouts. At this width and wider, your maximum font sizes and spacing kick in.', 'fluid-scale' ); ?></p>
-						</td>
-					</tr>
-				</table>
-
-				<!-- ================================================== -->
-				<!-- BASE FONT SIZE                                        -->
-				<!-- ================================================== -->
-				<h2><?php esc_html_e( 'Body Text Size', 'fluid-scale' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'Your base (body) font size at the smallest and largest screens. Every other step in the scale — headings, captions, spacing — is calculated relative to this. All other sizes grow and shrink proportionally when you change these.', 'fluid-scale' ); ?>
-				</p>
-
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="fs-min-base"><?php esc_html_e( 'Body size on mobile', 'fluid-scale' ); ?></label></th>
-						<td>
-							<input type="number" id="fs-min-base" name="fluid_scale[min_base]"
-								value="<?php echo esc_attr( $settings['min_base'] ); ?>"
-								min="8" max="32" step="0.5" class="small-text fs-param"> px
-							<p class="description"><?php esc_html_e( 'The size of --step-0 (body text) at your smallest screen. 15–16px is typical.', 'fluid-scale' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="fs-max-base"><?php esc_html_e( 'Body size on desktop', 'fluid-scale' ); ?></label></th>
-						<td>
-							<input type="number" id="fs-max-base" name="fluid_scale[max_base]"
-								value="<?php echo esc_attr( $settings['max_base'] ); ?>"
-								min="8" max="40" step="0.5" class="small-text fs-param"> px
-							<p class="description"><?php esc_html_e( 'The size of --step-0 (body text) at your largest screen. Setting this a few px larger than mobile gives text room to breathe on wide displays. 18–20px is typical.', 'fluid-scale' ); ?></p>
-						</td>
-					</tr>
-				</table>
-
-				<!-- ================================================== -->
-				<!-- SCALE RATIO                                           -->
-				<!-- ================================================== -->
-				<h2><?php esc_html_e( 'Scale Ratio', 'fluid-scale' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'Controls how much bigger each step gets relative to the one below it. A smaller ratio means steps are closer together — subtle hierarchy. A larger ratio creates dramatic size jumps. Watch the preview as you change this.', 'fluid-scale' ); ?>
-				</p>
-
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="fs-ratio"><?php esc_html_e( 'Ratio', 'fluid-scale' ); ?></label></th>
-						<td>
-							<select id="fs-ratio" name="fluid_scale[ratio]" class="fs-param fs-ratio-select">
-								<?php foreach ( $ratio_options as $value => $label ) : ?>
-								<option value="<?php echo esc_attr( $value ); ?>" <?php selected( (string) $settings['ratio'], $value ); ?>>
-									<?php echo esc_html( $label ); ?>
-								</option>
-								<?php endforeach; ?>
-							</select>
-						</td>
-					</tr>
-				</table>
-
-				<!-- ================================================== -->
-				<!-- NUMBER OF STEPS                                       -->
-				<!-- ================================================== -->
-				<h2><?php esc_html_e( 'Number of Steps', 'fluid-scale' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'How many font size steps to generate above and below body text. Most sites need 2 steps below (for captions and small labels) and 5 steps above (for subheadings through hero text). The preview shows all generated steps.', 'fluid-scale' ); ?>
-				</p>
-
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="fs-negative-steps"><?php esc_html_e( 'Steps below body text', 'fluid-scale' ); ?></label></th>
-						<td>
-							<input type="number" id="fs-negative-steps" name="fluid_scale[negative_steps]"
-								value="<?php echo esc_attr( $settings['negative_steps'] ); ?>"
-								min="1" max="5" step="1" class="small-text fs-param">
-							<p class="description"><?php esc_html_e( 'Generates --step--1, --step--2, etc. Use these for captions, labels, fine print. 2 is usually enough.', 'fluid-scale' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="fs-positive-steps"><?php esc_html_e( 'Steps above body text', 'fluid-scale' ); ?></label></th>
-						<td>
-							<input type="number" id="fs-positive-steps" name="fluid_scale[positive_steps]"
-								value="<?php echo esc_attr( $settings['positive_steps'] ); ?>"
-								min="1" max="10" step="1" class="small-text fs-param">
-							<p class="description"><?php esc_html_e( 'Generates --step-1 through --step-N. --step-5 becomes your largest heading or hero text. 5 covers most layouts.', 'fluid-scale' ); ?></p>
-						</td>
-					</tr>
-				</table>
-
-				<!-- ================================================== -->
-				<!-- GRID                                                  -->
-				<!-- ================================================== -->
-				<h2><?php esc_html_e( 'Grid', 'fluid-scale' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'Generates three variables: --grid-max-width (your container width), --grid-columns (column count), and --grid-gutter (the gap between columns, which uses a fluid space value so it grows with the screen). Also outputs .u-container and .u-grid utility classes you can apply directly in your builder.', 'fluid-scale' ); ?>
-				</p>
-
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="fs-grid-max-width"><?php esc_html_e( 'Container max width', 'fluid-scale' ); ?></label></th>
-						<td>
-							<input type="number" id="fs-grid-max-width" name="fluid_scale[grid_max_width]"
-								value="<?php echo esc_attr( $settings['grid_max_width'] ); ?>"
-								min="100" max="5000" step="1" class="small-text fs-param"> px
-							<p class="description"><?php esc_html_e( 'The maximum width of your main content area. Match this to your theme or builder\'s container setting. Used as --grid-max-width.', 'fluid-scale' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="fs-grid-columns"><?php esc_html_e( 'Columns', 'fluid-scale' ); ?></label></th>
-						<td>
-							<input type="number" id="fs-grid-columns" name="fluid_scale[grid_columns]"
-								value="<?php echo esc_attr( $settings['grid_columns'] ); ?>"
-								min="1" max="24" step="1" class="small-text fs-param">
-							<p class="description"><?php esc_html_e( 'Number of grid columns. 12 is standard. Used as --grid-columns.', 'fluid-scale' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="fs-grid-gutter"><?php esc_html_e( 'Gutter size', 'fluid-scale' ); ?></label></th>
-						<td>
-							<select id="fs-grid-gutter" name="fluid_scale[grid_gutter_pair]" class="fs-param">
-								<?php foreach ( Generator::ONE_UP_PAIRS as [ $from, $to ] ) :
-									$val = "{$from}-{$to}"; ?>
-								<option value="<?php echo esc_attr( $val ); ?>" <?php selected( $settings['grid_gutter_pair'], $val ); ?>>
-									<?php echo esc_html( "--space-{$val}" ); ?>
-								</option>
-								<?php endforeach; ?>
-							</select>
-							<p class="description"><?php esc_html_e( 'The space between grid columns. Uses a fluid space pair — the gutter grows between the two selected sizes as the screen widens. --space-s-l (small on mobile, large on desktop) is a good default. Used as --grid-gutter.', 'fluid-scale' ); ?></p>
-						</td>
-					</tr>
-				</table>
-
-				<!-- ================================================== -->
-				<!-- CUSTOM SPACE PAIRS                                    -->
-				<!-- ================================================== -->
-				<h2><?php esc_html_e( 'Custom Space Pairs', 'fluid-scale' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'Space pairs generate a spacing value that starts at one size on mobile and ends at a different size on desktop — a bigger range than any single step alone. Useful for section padding, hero margins, or any spacing that needs to change dramatically between screen sizes.', 'fluid-scale' ); ?>
-					<br><br>
-					<?php esc_html_e( 'Example: --space-s-xl starts at "small" spacing on mobile and grows to "extra-large" on desktop. The one-up pairs (like --space-s-m) are already generated automatically. Add custom pairs here for non-adjacent combinations.', 'fluid-scale' ); ?>
-				</p>
-
-				<div id="fs-custom-pairs">
-					<?php foreach ( $settings['custom_pairs'] as $pair ) : ?>
-					<div class="fs-pair-row">
-						<label class="screen-reader-text"><?php esc_html_e( 'From', 'fluid-scale' ); ?></label>
-						<select name="fluid_scale_pair_from[]" class="fs-pair-from">
-							<?php foreach ( $space_steps as $step ) : ?>
-							<option value="<?php echo esc_attr( $step ); ?>" <?php selected( $pair['from'], $step ); ?>>
-								<?php echo esc_html( "--space-{$step}" ); ?>
-							</option>
-							<?php endforeach; ?>
-						</select>
-						<span class="fs-pair-arrow" aria-hidden="true">→</span>
-						<label class="screen-reader-text"><?php esc_html_e( 'To', 'fluid-scale' ); ?></label>
-						<select name="fluid_scale_pair_to[]" class="fs-pair-to">
-							<?php foreach ( $space_steps as $step ) : ?>
-							<option value="<?php echo esc_attr( $step ); ?>" <?php selected( $pair['to'], $step ); ?>>
-								<?php echo esc_html( "--space-{$step}" ); ?>
-							</option>
-							<?php endforeach; ?>
-						</select>
-						<button type="button" class="button fs-pair-remove"><?php esc_html_e( 'Remove', 'fluid-scale' ); ?></button>
+				<!-- ==================================================== -->
+				<!-- Viewport Range                                         -->
+				<!-- ==================================================== -->
+				<div class="fs-panel">
+					<div class="fs-panel-header">
+						<h2 class="fs-panel-title"><?php esc_html_e( 'Viewport Range', 'fluid-scale' ); ?></h2>
+						<p class="fs-panel-desc"><?php esc_html_e( 'The screen widths your scale interpolates between', 'fluid-scale' ); ?></p>
 					</div>
-					<?php endforeach; ?>
+					<div class="fs-panel-body">
+						<div class="fs-field-row">
+							<div class="fs-field">
+								<label class="fs-label" for="fs-min-vp"><?php esc_html_e( 'Smallest screen', 'fluid-scale' ); ?></label>
+								<div class="fs-input-row">
+									<input type="number" id="fs-min-vp" class="fs-input fs-input--short"
+										x-model.number="minVp" min="1" max="2000" step="1">
+									<span class="fs-input-unit">px</span>
+								</div>
+								<p class="fs-help"><?php esc_html_e( 'Minimum values apply here. 320px is a typical mobile floor.', 'fluid-scale' ); ?></p>
+							</div>
+							<div class="fs-field">
+								<label class="fs-label" for="fs-max-vp"><?php esc_html_e( 'Largest screen', 'fluid-scale' ); ?></label>
+								<div class="fs-input-row">
+									<input type="number" id="fs-max-vp" class="fs-input fs-input--short"
+										x-model.number="maxVp" min="1" max="5000" step="1">
+									<span class="fs-input-unit">px</span>
+								</div>
+								<p class="fs-help"><?php esc_html_e( 'Maximum values apply here and wider. 1240–1440px is typical.', 'fluid-scale' ); ?></p>
+							</div>
+						</div>
+					</div>
 				</div>
 
-				<button type="button" class="button" id="fs-add-pair">
-					<?php esc_html_e( '+ Add Pair', 'fluid-scale' ); ?>
-				</button>
-
-				<template id="fs-pair-template">
-					<div class="fs-pair-row">
-						<label class="screen-reader-text"><?php esc_html_e( 'From', 'fluid-scale' ); ?></label>
-						<select name="fluid_scale_pair_from[]" class="fs-pair-from">
-							<?php foreach ( $space_steps as $step ) : ?>
-							<option value="<?php echo esc_attr( $step ); ?>"><?php echo esc_html( "--space-{$step}" ); ?></option>
-							<?php endforeach; ?>
-						</select>
-						<span class="fs-pair-arrow" aria-hidden="true">→</span>
-						<label class="screen-reader-text"><?php esc_html_e( 'To', 'fluid-scale' ); ?></label>
-						<select name="fluid_scale_pair_to[]" class="fs-pair-to">
-							<?php foreach ( $space_steps as $step ) : ?>
-							<option value="<?php echo esc_attr( $step ); ?>"><?php echo esc_html( "--space-{$step}" ); ?></option>
-							<?php endforeach; ?>
-						</select>
-						<button type="button" class="button fs-pair-remove"><?php esc_html_e( 'Remove', 'fluid-scale' ); ?></button>
+				<!-- ==================================================== -->
+				<!-- Body Text Size                                         -->
+				<!-- ==================================================== -->
+				<div class="fs-panel">
+					<div class="fs-panel-header">
+						<h2 class="fs-panel-title"><?php esc_html_e( 'Body Text Size', 'fluid-scale' ); ?></h2>
+						<p class="fs-panel-desc"><?php esc_html_e( 'All other sizes scale from this', 'fluid-scale' ); ?></p>
 					</div>
-				</template>
+					<div class="fs-panel-body">
+						<div class="fs-field-row">
+							<div class="fs-field">
+								<label class="fs-label" for="fs-min-base"><?php esc_html_e( 'On mobile', 'fluid-scale' ); ?></label>
+								<div class="fs-input-row">
+									<input type="number" id="fs-min-base" class="fs-input fs-input--short"
+										x-model.number="minBase" min="8" max="32" step="0.5">
+									<span class="fs-input-unit">px</span>
+								</div>
+								<p class="fs-help"><?php esc_html_e( 'Paragraph text at your smallest screen. 15–16px is typical.', 'fluid-scale' ); ?></p>
+							</div>
+							<div class="fs-field">
+								<label class="fs-label" for="fs-max-base"><?php esc_html_e( 'On desktop', 'fluid-scale' ); ?></label>
+								<div class="fs-input-row">
+									<input type="number" id="fs-max-base" class="fs-input fs-input--short"
+										x-model.number="maxBase" min="8" max="40" step="0.5">
+									<span class="fs-input-unit">px</span>
+								</div>
+								<p class="fs-help"><?php esc_html_e( 'Slightly larger gives text room to breathe. 18–20px is typical.', 'fluid-scale' ); ?></p>
+							</div>
+						</div>
+					</div>
+				</div>
 
-				<!-- ================================================== -->
-				<!-- BUILDER MAPPING                                       -->
-				<!-- ================================================== -->
+				<!-- ==================================================== -->
+				<!-- Scale Ratio                                             -->
+				<!-- ==================================================== -->
+				<div class="fs-panel">
+					<div class="fs-panel-header">
+						<h2 class="fs-panel-title"><?php esc_html_e( 'Scale Ratio', 'fluid-scale' ); ?></h2>
+						<p class="fs-panel-desc"><?php esc_html_e( 'How much bigger each heading step gets', 'fluid-scale' ); ?></p>
+					</div>
+					<div class="fs-panel-body">
+						<div class="fs-field">
+							<label class="fs-label" for="fs-ratio"><?php esc_html_e( 'Ratio', 'fluid-scale' ); ?></label>
+							<div class="fs-select-wrap">
+								<select id="fs-ratio" class="fs-select" x-model.number="ratio">
+									<option value="1.067"><?php esc_html_e( 'Minor Second (1.067) — subtle, dense UI', 'fluid-scale' ); ?></option>
+									<option value="1.125"><?php esc_html_e( 'Major Second (1.125) — gentle, content-heavy', 'fluid-scale' ); ?></option>
+									<option value="1.200"><?php esc_html_e( 'Minor Third (1.200) — balanced, safe default', 'fluid-scale' ); ?></option>
+									<option value="1.250"><?php esc_html_e( 'Major Third (1.250) — clear, without drama', 'fluid-scale' ); ?></option>
+									<option value="1.333"><?php esc_html_e( 'Perfect Fourth (1.333) — strong, editorial', 'fluid-scale' ); ?></option>
+									<option value="1.414"><?php esc_html_e( 'Augmented Fourth (1.414) — bold jumps', 'fluid-scale' ); ?></option>
+									<option value="1.500"><?php esc_html_e( 'Perfect Fifth (1.500) — very dramatic', 'fluid-scale' ); ?></option>
+									<option value="1.618"><?php esc_html_e( 'Golden Ratio (1.618) — maximum contrast', 'fluid-scale' ); ?></option>
+								</select>
+							</div>
+							<p class="fs-help"><?php esc_html_e( 'Watch the preview — the difference between Minor Third and Perfect Fourth is significant. Choose based on how much contrast you want between heading levels.', 'fluid-scale' ); ?></p>
+						</div>
+					</div>
+				</div>
+
+				<!-- ==================================================== -->
+				<!-- Steps                                                   -->
+				<!-- ==================================================== -->
+				<div class="fs-panel">
+					<div class="fs-panel-header">
+						<h2 class="fs-panel-title"><?php esc_html_e( 'Steps', 'fluid-scale' ); ?></h2>
+						<p class="fs-panel-desc"><?php esc_html_e( 'Sizes above and below body text', 'fluid-scale' ); ?></p>
+					</div>
+					<div class="fs-panel-body">
+						<div class="fs-field-row">
+							<div class="fs-field">
+								<label class="fs-label" for="fs-neg-steps"><?php esc_html_e( 'Below body text', 'fluid-scale' ); ?></label>
+								<input type="number" id="fs-neg-steps" class="fs-input fs-input--short"
+									x-model.number="negSteps" min="1" max="5" step="1">
+								<p class="fs-help"><?php esc_html_e( '--step--1, --step--2… captions and labels. 2 is usually enough.', 'fluid-scale' ); ?></p>
+							</div>
+							<div class="fs-field">
+								<label class="fs-label" for="fs-pos-steps"><?php esc_html_e( 'Above body text', 'fluid-scale' ); ?></label>
+								<input type="number" id="fs-pos-steps" class="fs-input fs-input--short"
+									x-model.number="posSteps" min="1" max="10" step="1">
+								<p class="fs-help"><?php esc_html_e( '--step-1 through --step-N. --step-5 is your largest heading. 5 covers most layouts.', 'fluid-scale' ); ?></p>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- ==================================================== -->
+				<!-- Grid                                                    -->
+				<!-- ==================================================== -->
+				<div class="fs-panel">
+					<div class="fs-panel-header">
+						<h2 class="fs-panel-title"><?php esc_html_e( 'Grid', 'fluid-scale' ); ?></h2>
+						<p class="fs-panel-desc"><?php esc_html_e( '--grid-max-width, --grid-columns, --grid-gutter', 'fluid-scale' ); ?></p>
+					</div>
+					<div class="fs-panel-body">
+						<div class="fs-field-row">
+							<div class="fs-field">
+								<label class="fs-label" for="fs-grid-width"><?php esc_html_e( 'Container width', 'fluid-scale' ); ?></label>
+								<div class="fs-input-row">
+									<input type="number" id="fs-grid-width" class="fs-input fs-input--short"
+										x-model.number="gridMaxWidth" min="100" max="5000" step="1">
+									<span class="fs-input-unit">px</span>
+								</div>
+								<p class="fs-help"><?php esc_html_e( 'Match your theme\'s max content width.', 'fluid-scale' ); ?></p>
+							</div>
+							<div class="fs-field">
+								<label class="fs-label" for="fs-grid-cols"><?php esc_html_e( 'Columns', 'fluid-scale' ); ?></label>
+								<input type="number" id="fs-grid-cols" class="fs-input fs-input--short"
+									x-model.number="gridColumns" min="1" max="24" step="1">
+								<p class="fs-help"><?php esc_html_e( '12 is standard.', 'fluid-scale' ); ?></p>
+							</div>
+						</div>
+						<div class="fs-field">
+							<label class="fs-label" for="fs-grid-gutter"><?php esc_html_e( 'Gutter (column gap)', 'fluid-scale' ); ?></label>
+							<div class="fs-select-wrap">
+								<select id="fs-grid-gutter" class="fs-select" x-model="gridGutter">
+									<?php foreach ( Generator::ONE_UP_PAIRS as [ $from, $to ] ) :
+										$val = "{$from}-{$to}"; ?>
+									<option value="<?php echo esc_attr( $val ); ?>">
+										<?php echo esc_html( "--space-{$val}" ); ?>
+									</option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+							<p class="fs-help"><?php esc_html_e( 'A space pair — the gutter grows from the first size on mobile to the second on desktop. --space-s-l is a good default.', 'fluid-scale' ); ?></p>
+						</div>
+					</div>
+				</div>
+
+				<!-- ==================================================== -->
+				<!-- Custom Space Pairs                                      -->
+				<!-- ==================================================== -->
+				<div class="fs-panel">
+					<div class="fs-panel-header">
+						<h2 class="fs-panel-title"><?php esc_html_e( 'Custom Space Pairs', 'fluid-scale' ); ?></h2>
+						<p class="fs-panel-desc"><?php esc_html_e( 'Spacing that grows across a wider range between screens', 'fluid-scale' ); ?></p>
+					</div>
+					<div class="fs-panel-body">
+						<p class="fs-help" style="margin-bottom:12px"><?php esc_html_e( 'Pairs start at one space size on mobile and end at another on desktop. Use them for section padding or hero margins where you want dramatic growth. One-up pairs (s→m, m→l, etc.) are already generated automatically.', 'fluid-scale' ); ?></p>
+
+						<!-- Rendered pairs (for form submission) -->
+						<template x-for="(pair, idx) in customPairs" :key="idx">
+							<div class="fs-pair-row">
+								<div class="fs-select-wrap">
+									<select class="fs-select" x-model="pair.from"
+										:name="'fluid_scale_pair_from[]'">
+										<?php foreach ( $space_steps as $step ) : ?>
+										<option value="<?php echo esc_attr( $step ); ?>">
+											<?php echo esc_html( "--space-{$step}" ); ?>
+										</option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+								<span class="fs-pair-arrow">→</span>
+								<div class="fs-select-wrap">
+									<select class="fs-select" x-model="pair.to"
+										:name="'fluid_scale_pair_to[]'">
+										<?php foreach ( $space_steps as $step ) : ?>
+										<option value="<?php echo esc_attr( $step ); ?>">
+											<?php echo esc_html( "--space-{$step}" ); ?>
+										</option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+								<button type="button" class="fs-pair-remove" @click="removePair(idx)" aria-label="<?php esc_attr_e( 'Remove pair', 'fluid-scale' ); ?>">✕</button>
+							</div>
+						</template>
+
+						<button type="button" class="fs-add-pair" @click="addPair">
+							+ <?php esc_html_e( 'Add pair', 'fluid-scale' ); ?>
+						</button>
+					</div>
+				</div>
+
+				<!-- ==================================================== -->
+				<!-- Builder Mapping                                         -->
+				<!-- ==================================================== -->
 				<?php if ( ! empty( $builders ) ) : ?>
-				<h2><?php esc_html_e( 'Builder Mapping', 'fluid-scale' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'A supported page builder was detected. Enabling mapping appends a block to the generated CSS that connects Fluid Scale variables to your builder\'s own variable names — so builder controls that reference those names automatically use your fluid scale values.', 'fluid-scale' ); ?>
-				</p>
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Variable Mapping', 'fluid-scale' ); ?></th>
-						<td>
-							<fieldset>
-								<label>
-									<input type="radio" name="fluid_scale[builder_mapping]" value="auto"
-										<?php checked( $settings['builder_mapping'], 'auto' ); ?>>
-									<?php esc_html_e( 'Auto — enable for detected builders', 'fluid-scale' ); ?>
-								</label><br>
-								<?php foreach ( $builders as $builder ) : ?>
-								<label>
-									<input type="radio" name="fluid_scale[builder_mapping]" value="<?php echo esc_attr( $builder ); ?>"
-										<?php checked( $settings['builder_mapping'], $builder ); ?>>
-									<?php printf(
-										/* translators: %s: builder name */
-										esc_html__( '%s only', 'fluid-scale' ),
-										esc_html( BuilderMappings::get_label( $builder ) )
-									); ?>
-								</label><br>
-								<?php endforeach; ?>
-								<label>
-									<input type="radio" name="fluid_scale[builder_mapping]" value="none"
-										<?php checked( $settings['builder_mapping'], 'none' ); ?>>
-									<?php esc_html_e( 'Disabled', 'fluid-scale' ); ?>
-								</label>
-								<?php foreach ( $builders as $builder ) :
-									$desc = BuilderMappings::get_description( $builder );
-									if ( $desc ) : ?>
-								<p class="description"><?php echo esc_html( $desc ); ?></p>
-								<?php endif; endforeach; ?>
-							</fieldset>
-						</td>
-					</tr>
-				</table>
+				<div class="fs-panel">
+					<div class="fs-panel-header">
+						<h2 class="fs-panel-title"><?php esc_html_e( 'Builder Mapping', 'fluid-scale' ); ?></h2>
+						<p class="fs-panel-desc"><?php esc_html_e( 'Connect scale variables to your builder\'s variable names', 'fluid-scale' ); ?></p>
+					</div>
+					<div class="fs-panel-body">
+						<div class="fs-radio-group">
+							<label class="fs-radio-label">
+								<input type="radio" x-model="builderMapping" value="auto">
+								<span><?php esc_html_e( 'Auto — enable for detected builders', 'fluid-scale' ); ?></span>
+							</label>
+							<?php foreach ( $builders as $builder ) : ?>
+							<label class="fs-radio-label">
+								<input type="radio" x-model="builderMapping" value="<?php echo esc_attr( $builder ); ?>">
+								<span><?php echo esc_html( BuilderMappings::get_label( $builder ) . ' ' . __( 'only', 'fluid-scale' ) ); ?></span>
+							</label>
+							<?php endforeach; ?>
+							<label class="fs-radio-label">
+								<input type="radio" x-model="builderMapping" value="none">
+								<span><?php esc_html_e( 'Disabled', 'fluid-scale' ); ?></span>
+							</label>
+						</div>
+					</div>
+				</div>
 				<?php endif; ?>
 
-				<?php submit_button( __( 'Save &amp; Regenerate', 'fluid-scale' ) ); ?>
+				<!-- ==================================================== -->
+				<!-- Save                                                    -->
+				<!-- ==================================================== -->
+				<div class="fs-panel">
+					<div class="fs-save-row">
+						<button type="submit" class="fs-btn fs-btn--primary">
+							<?php esc_html_e( 'Save & Regenerate', 'fluid-scale' ); ?>
+						</button>
+					</div>
+				</div>
 
-				<!-- Generated CSS -->
-				<h2><?php esc_html_e( 'Generated CSS', 'fluid-scale' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'Read-only. This is the file served to every page on your site. It updates when you save.', 'fluid-scale' ); ?>
-					<?php if ( $file_exists ) : ?>
-					<a href="<?php echo esc_url( FileWriter::get_url() ); ?>" target="_blank" rel="noopener">
-						<?php esc_html_e( 'View file ↗', 'fluid-scale' ); ?>
-					</a>
-					<?php endif; ?>
-				</p>
-				<textarea id="fs-css-output" class="large-text code" rows="16" readonly
-					aria-label="<?php esc_attr_e( 'Generated CSS', 'fluid-scale' ); ?>"><?php
-					if ( $file_exists ) {
-						// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-						echo esc_textarea( file_get_contents( FileWriter::get_dir() . '/fluid-scale.css' ) );
-					} else {
-						echo esc_textarea( __( 'No CSS file yet. Save your settings to generate it.', 'fluid-scale' ) );
-					}
-				?></textarea>
+				<!-- ==================================================== -->
+				<!-- Generated CSS                                           -->
+				<!-- ==================================================== -->
+				<div class="fs-panel" style="margin-top:12px">
+					<div class="fs-panel-header">
+						<h2 class="fs-panel-title"><?php esc_html_e( 'Generated CSS', 'fluid-scale' ); ?></h2>
+						<p class="fs-panel-desc"><?php esc_html_e( 'Read-only — updates on save', 'fluid-scale' ); ?></p>
+					</div>
+					<textarea class="fs-css-output" rows="14" readonly
+						aria-label="<?php esc_attr_e( 'Generated CSS', 'fluid-scale' ); ?>"><?php
+						if ( $file_exists ) {
+							// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+							echo esc_textarea( file_get_contents( FileWriter::get_dir() . '/fluid-scale.css' ) );
+						} else {
+							echo esc_textarea( __( 'No CSS file yet. Save your settings to generate it.', 'fluid-scale' ) );
+						}
+					?></textarea>
+				</div>
 
 			</form>
 		</div><!-- .fs-layout-form -->
 
 		<!-- ============================================================ -->
-		<!-- RIGHT: STICKY PREVIEW PANEL                                   -->
+		<!-- RIGHT: LIVE PREVIEW                                           -->
 		<!-- ============================================================ -->
-		<div class="fs-layout-preview">
-			<div class="fs-preview-panel" id="fs-preview">
+		<div class="fs-preview-col">
+			<div class="fs-preview-shell">
+
+				<!-- Tab bar -->
 				<div class="fs-preview-tabs" role="tablist">
-					<button role="tab" class="fs-tab fs-tab--active" aria-controls="fs-preview-type" aria-selected="true" id="fs-tab-type">
-						<?php esc_html_e( 'Type', 'fluid-scale' ); ?>
+					<button role="tab" class="fs-preview-tab"
+						:aria-selected="previewTab === 'mockup'"
+						:class="{ 'fs-preview-tab': true }"
+						:style="previewTab === 'mockup' ? 'color:#fafafa;border-bottom-color:#a78bfa' : ''"
+						@click="previewTab = 'mockup'; inspected = null">
+						<?php esc_html_e( 'Page Mockup', 'fluid-scale' ); ?>
 					</button>
-					<button role="tab" class="fs-tab" aria-controls="fs-preview-space" aria-selected="false" id="fs-tab-space">
-						<?php esc_html_e( 'Space', 'fluid-scale' ); ?>
+					<button role="tab" class="fs-preview-tab"
+						:style="previewTab === 'type' ? 'color:#fafafa;border-bottom-color:#a78bfa' : ''"
+						@click="previewTab = 'type'; inspected = null">
+						<?php esc_html_e( 'Type Scale', 'fluid-scale' ); ?>
+					</button>
+					<button role="tab" class="fs-preview-tab"
+						:style="previewTab === 'space' ? 'color:#fafafa;border-bottom-color:#a78bfa' : ''"
+						@click="previewTab = 'space'; inspected = null">
+						<?php esc_html_e( 'Space Scale', 'fluid-scale' ); ?>
 					</button>
 				</div>
 
-				<p class="fs-preview-viewport-note">
-					<?php esc_html_e( 'Shown at 1024px viewport', 'fluid-scale' ); ?>
-				</p>
+				<p class="fs-preview-vp-note"><?php esc_html_e( 'Values shown at 1024px viewport · click any element to inspect', 'fluid-scale' ); ?></p>
 
-				<div id="fs-preview-type" role="tabpanel" aria-labelledby="fs-tab-type">
-					<div id="fs-type-specimen"><!-- populated by admin.js --></div>
+				<!-- ==================================================== -->
+				<!-- PAGE MOCKUP TAB                                        -->
+				<!-- ==================================================== -->
+				<div x-show="previewTab === 'mockup'" class="fs-mockup">
+
+					<!-- Hero -->
+					<div class="fs-mock-hero">
+						<p class="fs-mock-kicker">
+							<?php esc_html_e( 'Annual Report 2024', 'fluid-scale' ); ?>
+						</p>
+						<h1 class="fs-token"
+							:class="{ 'fs-token--active': inspected && inspected.variable === '--step-5' }"
+							:style="{ fontSize: stepPx(5) + 'px', fontFamily: 'Georgia, serif', lineHeight: '1.1', marginBottom: spacePx('m') + 'px', color: '#fafafa' }"
+							@click="inspect('H1 / Hero heading', '--step-5', stepClamp(5), stepPx(5))">
+							<?php esc_html_e( 'Building Stronger Communities Through Collective Action', 'fluid-scale' ); ?>
+						</h1>
+						<p class="fs-token"
+							:class="{ 'fs-token--active': inspected && inspected.variable === '--step-1' }"
+							:style="{ fontSize: stepPx(1) + 'px', color: '#a1a1aa', lineHeight: '1.5', marginBottom: spacePx('l') + 'px' }"
+							@click="inspect('Subheading / Lead', '--step-1', stepClamp(1), stepPx(1))">
+							<?php esc_html_e( 'Our programs reached 14,000 individuals across 23 counties. Here\'s what we accomplished together.', 'fluid-scale' ); ?>
+						</p>
+						<div :style="{ display: 'flex', gap: spacePx('s') + 'px' }">
+							<span style="background:#a78bfa;color:#09090b;padding:8px 16px;border-radius:4px;font-size:13px;font-weight:600;cursor:default">
+								<?php esc_html_e( 'Read the Report', 'fluid-scale' ); ?>
+							</span>
+							<span style="border:1px solid #3f3f46;color:#a1a1aa;padding:8px 16px;border-radius:4px;font-size:13px;cursor:default">
+								<?php esc_html_e( 'Watch the Story', 'fluid-scale' ); ?>
+							</span>
+						</div>
+					</div>
+
+					<!-- Section heading -->
+					<h2 class="fs-token"
+						:class="{ 'fs-token--active': inspected && inspected.variable === '--step-3' }"
+						:style="{ fontSize: stepPx(3) + 'px', fontFamily: 'Georgia, serif', lineHeight: '1.2', marginBottom: spacePx('s') + 'px', color: '#fafafa' }"
+						@click="inspect('H2 / Section heading', '--step-3', stepClamp(3), stepPx(3))">
+						<?php esc_html_e( 'Program Areas', 'fluid-scale' ); ?>
+					</h2>
+
+					<!-- Cards -->
+					<div class="fs-mock-cards"
+						:style="{ gap: spacePx('m') + 'px', marginBottom: spacePx('xl') + 'px' }">
+
+						<div class="fs-mock-card fs-token"
+							:class="{ 'fs-token--active': inspected && inspected.variable === '--space-m' }"
+							@click="inspect('Card padding', '--space-m', '', spacePx('m'))">
+							<div class="fs-mock-card-img">
+								<span style="font-family:monospace;font-size:10px;color:#52525b">16:9 image</span>
+							</div>
+							<div class="fs-mock-card-body" :style="{ padding: spacePx('m') + 'px' }">
+								<h3 :style="{ fontSize: stepPx(1) + 'px', fontFamily: 'Georgia, serif', color: '#fafafa', marginBottom: spacePx('xs') + 'px', lineHeight: '1.3' }">
+									<?php esc_html_e( 'Housing Stability', 'fluid-scale' ); ?>
+								</h3>
+								<p :style="{ fontSize: stepPx(-1) + 'px', color: '#71717a', lineHeight: '1.6', margin: 0 }">
+									<?php esc_html_e( 'Preventing evictions and connecting families to emergency rental assistance across the region.', 'fluid-scale' ); ?>
+								</p>
+							</div>
+						</div>
+
+						<div class="fs-mock-card fs-token"
+							:class="{ 'fs-token--active': inspected && inspected.variable === '--space-m' }"
+							@click="inspect('Card padding', '--space-m', '', spacePx('m'))">
+							<div class="fs-mock-card-img">
+								<span style="font-family:monospace;font-size:10px;color:#52525b">16:9 image</span>
+							</div>
+							<div class="fs-mock-card-body" :style="{ padding: spacePx('m') + 'px' }">
+								<h3 :style="{ fontSize: stepPx(1) + 'px', fontFamily: 'Georgia, serif', color: '#fafafa', marginBottom: spacePx('xs') + 'px', lineHeight: '1.3' }">
+									<?php esc_html_e( 'Workforce Development', 'fluid-scale' ); ?>
+								</h3>
+								<p :style="{ fontSize: stepPx(-1) + 'px', color: '#71717a', lineHeight: '1.6', margin: 0 }">
+									<?php esc_html_e( 'Job training and placement programs with a 78% 90-day employment retention rate.', 'fluid-scale' ); ?>
+								</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Body copy block -->
+					<div class="fs-mock-body-block">
+						<h3 class="fs-token"
+							:class="{ 'fs-token--active': inspected && inspected.variable === '--step-2' }"
+							:style="{ fontSize: stepPx(2) + 'px', fontFamily: 'Georgia, serif', color: '#fafafa', marginBottom: spacePx('s') + 'px', lineHeight: '1.3' }"
+							@click="inspect('H3 / Article subheading', '--step-2', stepClamp(2), stepPx(2))">
+							<?php esc_html_e( 'A Message From Our Executive Director', 'fluid-scale' ); ?>
+						</h3>
+						<p class="fs-token"
+							:class="{ 'fs-token--active': inspected && inspected.variable === '--step-0' }"
+							:style="{ fontSize: stepPx(0) + 'px', color: '#a1a1aa', lineHeight: '1.75', marginBottom: spacePx('s') + 'px' }"
+							@click="inspect('Body text', '--step-0', stepClamp(0), stepPx(0))">
+							<?php esc_html_e( 'This year tested our resilience in ways we did not anticipate. Rising costs, increased demand for services, and a shifting funding landscape required us to adapt quickly. And we did — because of you.', 'fluid-scale' ); ?>
+						</p>
+						<p :style="{ fontSize: stepPx(0) + 'px', color: '#a1a1aa', lineHeight: '1.75', marginBottom: spacePx('s') + 'px' }">
+							<?php esc_html_e( 'The numbers in this report represent real people. Families who stayed in their homes. Individuals who found stable employment. Children whose futures look brighter because this community showed up.', 'fluid-scale' ); ?>
+						</p>
+						<p class="fs-token"
+							:class="{ 'fs-token--active': inspected && inspected.variable === '--step--1' }"
+							:style="{ fontSize: stepPx(-1) + 'px', color: '#71717a', lineHeight: '1.6', fontStyle: 'italic' }"
+							@click="inspect('Caption / small text', '--step--1', stepClamp(-1), stepPx(-1))">
+							<?php esc_html_e( '— Dr. Maria Santos, Executive Director. Photography by James Okafor. Annual Report design by the Communications Team.', 'fluid-scale' ); ?>
+						</p>
+					</div>
+
+				</div><!-- /mockup -->
+
+				<!-- ==================================================== -->
+				<!-- TYPE SCALE TAB                                         -->
+				<!-- ==================================================== -->
+				<div x-show="previewTab === 'type'" style="display:none">
+					<div class="fs-type-list">
+						<template x-for="step in typeSteps" :key="step.n">
+							<div class="fs-type-row"
+								:class="{ 'fs-type-row--active': inspected && inspected.variable === step.name }"
+								@click="inspect(step.name, step.name, step.clamp, step.px)">
+								<div class="fs-type-meta">
+									<code class="fs-type-name" x-text="step.name"></code>
+									<span class="fs-type-px" x-text="step.px + 'px'"></span>
+								</div>
+								<div class="fs-type-sample"
+									:style="{ fontSize: step.px + 'px' }">
+									The quick brown fox
+								</div>
+							</div>
+						</template>
+					</div>
 				</div>
 
-				<div id="fs-preview-space" role="tabpanel" aria-labelledby="fs-tab-space" hidden>
-					<div id="fs-space-specimen"><!-- populated by admin.js --></div>
+				<!-- ==================================================== -->
+				<!-- SPACE SCALE TAB                                        -->
+				<!-- ==================================================== -->
+				<div x-show="previewTab === 'space'" style="display:none">
+					<div class="fs-space-list">
+						<template x-for="step in spaceSteps" :key="step.key">
+							<div class="fs-space-row"
+								:class="{ 'fs-space-row--active': inspected && inspected.variable === step.name }"
+								@click="inspect(step.name, step.name, step.clamp, step.pxAt)">
+								<div class="fs-space-meta">
+									<code class="fs-space-name" x-text="step.name"></code>
+									<span class="fs-space-px" x-text="step.pxMin + '–' + step.pxMax + 'px'"></span>
+								</div>
+								<div class="fs-space-bar-wrap">
+									<div class="fs-space-bar">
+										<div class="fs-space-bar-fill" :style="{ width: step.barPct + '%' }"></div>
+									</div>
+								</div>
+							</div>
+						</template>
+					</div>
 				</div>
-			</div>
-		</div><!-- .fs-layout-preview -->
+
+				<!-- ==================================================== -->
+				<!-- INSPECTOR (always visible when something is selected)  -->
+				<!-- ==================================================== -->
+				<div class="fs-inspector" x-show="inspected" style="display:none">
+					<p class="fs-inspector-label"><?php esc_html_e( 'Inspector', 'fluid-scale' ); ?></p>
+					<p class="fs-inspector-var" x-text="inspected && inspected.variable"></p>
+					<p class="fs-inspector-clamp" x-text="inspected && inspected.clamp" x-show="inspected && inspected.clamp"></p>
+					<p class="fs-inspector-px" x-text="inspected && inspected.px + 'px @ 1024px viewport'"></p>
+				</div>
+
+			</div><!-- .fs-preview-shell -->
+		</div><!-- .fs-preview-col -->
 
 	</div><!-- .fs-layout -->
 
-</div><!-- .fluid-scale-wrap -->
+</div><!-- .fs-wrap -->

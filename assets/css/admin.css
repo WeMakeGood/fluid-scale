@@ -1,269 +1,699 @@
 /**
- * Fluid Scale Admin Styles
+ * Fluid Scale Admin Design System
+ *
+ * Custom design — overrides all WP form-table defaults within .fs-wrap.
+ * Built for typographers. Vercel-inspired: clean, high-contrast, minimal chrome.
  */
 
 /* ------------------------------------------------------------------ */
-/* Intro block                                                          */
+/* Design tokens                                                         */
 /* ------------------------------------------------------------------ */
 
-.fs-intro {
-	background: #f6f7f7;
-	border: 1px solid #dcdcde;
-	border-radius: 4px;
-	padding: 16px 20px;
-	margin: 16px 0 0;
-	max-width: 800px;
+.fs-wrap {
+	--fs-bg:           #fafafa;
+	--fs-surface:      #ffffff;
+	--fs-surface-2:    #f4f4f5;
+	--fs-surface-3:    #e4e4e7;
+	--fs-border:       #e4e4e7;
+	--fs-border-focus: #18181b;
+	--fs-text:         #18181b;
+	--fs-text-2:       #52525b;
+	--fs-text-3:       #a1a1aa;
+	--fs-accent:       #18181b;
+	--fs-accent-hover: #3f3f46;
+	--fs-ok:           #16a34a;
+	--fs-ok-bg:        #f0fdf4;
+	--fs-warn:         #d97706;
+	--fs-warn-bg:      #fffbeb;
+	--fs-error:        #dc2626;
+	--fs-radius:       6px;
+	--fs-radius-sm:    4px;
+	--fs-font:         -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+	--fs-mono:         'JetBrains Mono', 'Fira Code', Consolas, monospace;
+	--fs-preview-bg:   #18181b;
+	--fs-preview-text: #fafafa;
+	--fs-preview-dim:  #a1a1aa;
+	--fs-insp-bg:      #09090b;
+	--fs-insp-border:  #27272a;
+	--fs-insp-accent:  #a78bfa;
 }
 
-.fs-intro-title {
-	margin-top: 0;
-	font-size: 14px;
+/* ------------------------------------------------------------------ */
+/* Page shell                                                            */
+/* ------------------------------------------------------------------ */
+
+.fs-wrap {
+	font-family: var(--fs-font);
+	color: var(--fs-text);
+	max-width: 1600px;
+	margin: 0;
+	padding: 0 0 80px;
 }
 
-.fs-intro p {
-	margin: 0 0 8px;
-	color: #50575e;
+.fs-wrap * {
+	box-sizing: border-box;
+}
+
+/* WP adds margin to h1.wp-heading-inline, neutralise inside our wrap */
+.fs-wrap h1 {
+	font-size: 20px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	margin: 24px 0 4px;
+	padding: 0;
+	color: var(--fs-text);
+	border: none;
+}
+
+.fs-page-desc {
+	color: var(--fs-text-2);
 	font-size: 13px;
-}
-
-.fs-intro p:last-child {
-	margin-bottom: 0;
+	margin: 0 0 24px;
 }
 
 /* ------------------------------------------------------------------ */
-/* Two-column layout                                                    */
+/* Status bar                                                            */
 /* ------------------------------------------------------------------ */
 
-.fluid-scale-wrap {
-	max-width: 1400px;
+.fs-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	font-weight: 500;
+	padding: 5px 10px;
+	border-radius: var(--fs-radius-sm);
+	margin-bottom: 20px;
 }
+
+.fs-status--ok   { background: var(--fs-ok-bg);   color: var(--fs-ok);   }
+.fs-status--warn { background: var(--fs-warn-bg);  color: var(--fs-warn); }
+
+.fs-status__dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: currentColor;
+	flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Two-column layout                                                     */
+/* ------------------------------------------------------------------ */
 
 .fs-layout {
 	display: grid;
-	grid-template-columns: 1fr 380px;
+	grid-template-columns: 420px 1fr;
 	gap: 0 32px;
 	align-items: start;
-	margin-top: 16px;
 }
 
 @media ( max-width: 1100px ) {
 	.fs-layout {
 		grid-template-columns: 1fr;
 	}
-	.fs-layout-preview {
-		order: -1; /* Preview above form on narrow screens */
-	}
 }
 
 /* ------------------------------------------------------------------ */
-/* Form column                                                          */
+/* Settings panel (left column)                                          */
 /* ------------------------------------------------------------------ */
 
-.fs-layout-form .form-table th {
-	width: 200px;
-}
-
-.fs-ratio-select {
-	min-width: 420px;
-}
-
-/* ------------------------------------------------------------------ */
-/* Preview panel (sticky)                                               */
-/* ------------------------------------------------------------------ */
-
-.fs-layout-preview {
-	position: sticky;
-	top: 32px;
-}
-
-.fs-preview-panel {
-	background: #fff;
-	border: 1px solid #dcdcde;
-	border-radius: 4px;
+.fs-panel {
+	background: var(--fs-surface);
+	border: 1px solid var(--fs-border);
+	border-radius: var(--fs-radius);
 	overflow: hidden;
 }
 
-.fs-preview-tabs {
-	display: flex;
-	border-bottom: 1px solid #dcdcde;
-	background: #f6f7f7;
+.fs-panel + .fs-panel {
+	margin-top: 12px;
 }
 
-.fs-tab {
-	flex: 1;
-	padding: 10px 16px;
-	background: none;
-	border: none;
-	border-bottom: 2px solid transparent;
-	cursor: pointer;
-	font-size: 13px;
-	font-weight: 500;
-	color: #50575e;
-	margin-bottom: -1px;
-}
-
-.fs-tab:hover {
-	color: #1d2327;
-}
-
-.fs-tab--active {
-	color: #2271b1;
-	border-bottom-color: #2271b1;
-	background: #fff;
-}
-
-.fs-preview-viewport-note {
-	font-size: 11px;
-	color: #a0a5aa;
-	margin: 0;
-	padding: 6px 16px;
-	border-bottom: 1px solid #f0f0f0;
-}
-
-#fs-preview-type,
-#fs-preview-space {
-	padding: 12px 16px;
-	max-height: calc( 100vh - 220px );
-	overflow-y: auto;
-}
-
-/* ------------------------------------------------------------------ */
-/* Type specimen rows                                                   */
-/* ------------------------------------------------------------------ */
-
-.fs-specimen-row {
+.fs-panel-header {
+	padding: 14px 20px 12px;
+	border-bottom: 1px solid var(--fs-border);
 	display: flex;
 	align-items: baseline;
-	gap: 12px;
-	padding: 6px 0;
-	border-bottom: 1px solid #f6f7f7;
+	gap: 10px;
 }
 
-.fs-specimen-row:last-child {
-	border-bottom: none;
-}
-
-.fs-specimen-meta {
-	flex: 0 0 auto;
-	width: 130px;
-	min-width: 0;
-}
-
-.fs-specimen-name {
-	display: block;
-	font-size: 11px;
+.fs-panel-title {
+	font-size: 13px;
 	font-weight: 600;
-	color: #1d2327;
-	white-space: nowrap;
+	margin: 0;
+	color: var(--fs-text);
+	letter-spacing: -0.01em;
 }
 
-.fs-specimen-px {
+.fs-panel-desc {
+	font-size: 12px;
+	color: var(--fs-text-3);
+	margin: 0;
+}
+
+.fs-panel-body {
+	padding: 16px 20px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Form fields                                                           */
+/* ------------------------------------------------------------------ */
+
+.fs-field {
+	margin-bottom: 16px;
+}
+
+.fs-field:last-child {
+	margin-bottom: 0;
+}
+
+.fs-label {
 	display: block;
-	font-size: 10px;
-	color: #a0a5aa;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--fs-text-2);
+	margin-bottom: 5px;
+	letter-spacing: 0.01em;
+	text-transform: uppercase;
 }
 
-.fs-specimen-text {
-	flex: 1;
-	font-family: Georgia, 'Times New Roman', serif;
-	line-height: 1;
-	color: #1d2327;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: clip;
+.fs-label-inline {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--fs-text-2);
 }
 
-/* ------------------------------------------------------------------ */
-/* Space specimen rows                                                  */
-/* ------------------------------------------------------------------ */
+.fs-help {
+	font-size: 12px;
+	color: var(--fs-text-3);
+	margin-top: 4px;
+	line-height: 1.5;
+}
 
-.fs-space-row {
+.fs-input,
+.fs-select {
+	width: 100%;
+	padding: 7px 10px;
+	font-size: 13px;
+	font-family: var(--fs-font);
+	color: var(--fs-text);
+	background: var(--fs-surface);
+	border: 1px solid var(--fs-border);
+	border-radius: var(--fs-radius-sm);
+	outline: none;
+	transition: border-color 0.1s;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.fs-input:focus,
+.fs-select:focus {
+	border-color: var(--fs-border-focus);
+	box-shadow: 0 0 0 2px rgba(24,24,27,0.08);
+}
+
+.fs-input--short {
+	width: 100px;
+}
+
+.fs-input-row {
 	display: flex;
 	align-items: center;
+	gap: 8px;
+}
+
+.fs-input-unit {
+	font-size: 12px;
+	color: var(--fs-text-3);
+	white-space: nowrap;
+}
+
+/* Select arrow */
+.fs-select-wrap {
+	position: relative;
+}
+
+.fs-select-wrap::after {
+	content: '';
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 0;
+	height: 0;
+	border-left: 4px solid transparent;
+	border-right: 4px solid transparent;
+	border-top: 5px solid var(--fs-text-3);
+	pointer-events: none;
+}
+
+.fs-select {
+	padding-right: 28px;
+	cursor: pointer;
+}
+
+/* Two-up field row */
+.fs-field-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
 	gap: 12px;
-	padding: 5px 0;
-	border-bottom: 1px solid #f6f7f7;
-}
-
-.fs-space-row:last-child {
-	border-bottom: none;
-}
-
-.fs-space-meta {
-	flex: 0 0 120px;
-}
-
-.fs-space-bar-wrap {
-	flex: 1;
-	overflow: hidden;
-}
-
-.fs-space-bar {
-	height: 12px;
-	background: #2271b1;
-	border-radius: 2px;
-	opacity: 0.5;
-	max-width: 100%;
 }
 
 /* ------------------------------------------------------------------ */
-/* Status line                                                          */
+/* Radio group                                                           */
 /* ------------------------------------------------------------------ */
 
-.fluid-scale-status {
-	padding: 6px 12px;
-	border-radius: 3px;
-	display: inline-block;
+.fs-radio-group {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.fs-radio-label {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	cursor: pointer;
 	font-size: 13px;
-	margin-bottom: 8px;
+	color: var(--fs-text);
 }
 
-.fluid-scale-status--ok {
-	background: #edfaef;
-	color: #1a7038;
-	border: 1px solid #b3dfbb;
-}
-
-.fluid-scale-status--warn {
-	background: #fff8e5;
-	color: #8a6d00;
-	border: 1px solid #f0d080;
+.fs-radio-label input[type="radio"] {
+	margin-top: 2px;
+	flex-shrink: 0;
+	accent-color: var(--fs-accent);
 }
 
 /* ------------------------------------------------------------------ */
-/* Custom pairs                                                         */
+/* Custom pairs                                                          */
 /* ------------------------------------------------------------------ */
-
-#fs-custom-pairs {
-	margin-bottom: 8px;
-}
 
 .fs-pair-row {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	margin-bottom: 6px;
+	margin-bottom: 8px;
 }
 
-.fs-pair-row select {
-	min-width: 130px;
+.fs-pair-row .fs-select-wrap {
+	flex: 1;
 }
 
 .fs-pair-arrow {
-	color: #a0a5aa;
+	color: var(--fs-text-3);
 	font-size: 14px;
+	flex-shrink: 0;
+}
+
+.fs-pair-remove {
+	flex-shrink: 0;
+	padding: 6px;
+	background: none;
+	border: 1px solid var(--fs-border);
+	border-radius: var(--fs-radius-sm);
+	cursor: pointer;
+	color: var(--fs-text-3);
+	font-size: 14px;
+	line-height: 1;
+	transition: color 0.1s, border-color 0.1s;
+}
+
+.fs-pair-remove:hover {
+	color: var(--fs-error);
+	border-color: var(--fs-error);
+}
+
+.fs-add-pair {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--fs-text-2);
+	background: none;
+	border: 1px dashed var(--fs-border);
+	border-radius: var(--fs-radius-sm);
+	padding: 6px 12px;
+	cursor: pointer;
+	transition: color 0.1s, border-color 0.1s;
+	width: 100%;
+	justify-content: center;
+	margin-top: 4px;
+}
+
+.fs-add-pair:hover {
+	color: var(--fs-text);
+	border-color: var(--fs-text-3);
 }
 
 /* ------------------------------------------------------------------ */
-/* Generated CSS textarea                                               */
+/* Save button                                                           */
 /* ------------------------------------------------------------------ */
 
-#fs-css-output {
-	font-family: Consolas, Monaco, monospace;
+.fs-save-row {
+	padding: 16px 20px;
+	border-top: 1px solid var(--fs-border);
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.fs-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 18px;
+	font-size: 13px;
+	font-weight: 500;
+	font-family: var(--fs-font);
+	border-radius: var(--fs-radius-sm);
+	border: none;
+	cursor: pointer;
+	transition: background 0.1s, transform 0.05s;
+}
+
+.fs-btn:active {
+	transform: scale(0.98);
+}
+
+.fs-btn--primary {
+	background: var(--fs-accent);
+	color: #fff;
+}
+
+.fs-btn--primary:hover {
+	background: var(--fs-accent-hover);
+}
+
+.fs-btn--ghost {
+	background: none;
+	border: 1px solid var(--fs-border);
+	color: var(--fs-text-2);
+}
+
+.fs-btn--ghost:hover {
+	border-color: var(--fs-text-3);
+	color: var(--fs-text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Generated CSS output                                                  */
+/* ------------------------------------------------------------------ */
+
+.fs-css-output {
+	width: 100%;
+	font-family: var(--fs-mono);
 	font-size: 11px;
-	line-height: 1.5;
-	background: #f6f7f7;
-	color: #1d2327;
-	border: 1px solid #dcdcde;
+	line-height: 1.6;
+	background: #09090b;
+	color: #a1a1aa;
+	border: none;
+	border-radius: 0;
 	resize: vertical;
+	padding: 16px;
+	min-height: 160px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Preview column (right)                                                */
+/* ------------------------------------------------------------------ */
+
+.fs-preview-col {
+	position: sticky;
+	top: 32px;
+}
+
+.fs-preview-shell {
+	background: var(--fs-preview-bg);
+	border-radius: var(--fs-radius);
+	overflow: hidden;
+	color: var(--fs-preview-text);
+}
+
+/* Tab bar */
+.fs-preview-tabs {
+	display: flex;
+	align-items: center;
+	border-bottom: 1px solid #27272a;
+	padding: 0 16px;
+	gap: 0;
+}
+
+.fs-preview-tab {
+	padding: 10px 14px;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--fs-preview-dim);
+	background: none;
+	border: none;
+	border-bottom: 2px solid transparent;
+	cursor: pointer;
+	margin-bottom: -1px;
+	transition: color 0.1s;
+	font-family: var(--fs-font);
+}
+
+.fs-preview-tab:hover {
+	color: var(--fs-preview-text);
+}
+
+.fs-preview-tab[aria-selected="true"] {
+	color: var(--fs-preview-text);
+	border-bottom-color: var(--fs-insp-accent);
+}
+
+.fs-preview-vp-note {
+	font-size: 11px;
+	color: #52525b;
+	padding: 6px 16px;
+	border-bottom: 1px solid #27272a;
+	font-family: var(--fs-mono);
+}
+
+/* ------------------------------------------------------------------ */
+/* Inspector                                                             */
+/* ------------------------------------------------------------------ */
+
+.fs-inspector {
+	background: var(--fs-insp-bg);
+	border-top: 1px solid var(--fs-insp-border);
+	padding: 12px 16px;
+	font-family: var(--fs-mono);
+	font-size: 11px;
+}
+
+.fs-inspector-label {
+	color: var(--fs-insp-accent);
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	margin-bottom: 6px;
+}
+
+.fs-inspector-var {
+	color: #f4f4f5;
+	font-size: 13px;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.fs-inspector-clamp {
+	color: #71717a;
+	word-break: break-all;
+	line-height: 1.5;
+}
+
+.fs-inspector-px {
+	color: var(--fs-insp-accent);
+	margin-top: 4px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mockup preview                                                         */
+/* ------------------------------------------------------------------ */
+
+.fs-mockup {
+	padding: 32px 28px;
+	max-height: calc( 100vh - 200px );
+	overflow-y: auto;
+}
+
+/* Clickable token elements in mockup */
+.fs-token {
+	cursor: pointer;
+	border-radius: 2px;
+	transition: outline 0.1s;
+	outline: 1px solid transparent;
+	outline-offset: 2px;
+}
+
+.fs-token:hover,
+.fs-token--active {
+	outline-color: var(--fs-insp-accent);
+}
+
+/* Mockup section blocks */
+.fs-mock-hero {
+	margin-bottom: 32px;
+	padding-bottom: 28px;
+	border-bottom: 1px solid #27272a;
+}
+
+.fs-mock-kicker {
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--fs-insp-accent);
+	margin-bottom: 12px;
+}
+
+.fs-mock-cards {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+	margin-bottom: 28px;
+	padding-bottom: 28px;
+	border-bottom: 1px solid #27272a;
+}
+
+.fs-mock-card {
+	background: #27272a;
+	border-radius: var(--fs-radius-sm);
+	overflow: hidden;
+}
+
+.fs-mock-card-img {
+	height: 80px;
+	background: #3f3f46;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #52525b;
+	font-size: 11px;
+	font-family: var(--fs-mono);
+}
+
+.fs-mock-card-body {
+	padding: 12px;
+}
+
+.fs-mock-body-block p {
+	color: #a1a1aa;
+	line-height: 1.7;
+	margin: 0 0 12px;
+}
+
+.fs-mock-body-block p:last-child {
+	margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Type specimen tab                                                     */
+/* ------------------------------------------------------------------ */
+
+.fs-type-list {
+	padding: 8px 0;
+}
+
+.fs-type-row {
+	display: flex;
+	align-items: baseline;
+	gap: 12px;
+	padding: 6px 16px;
+	cursor: pointer;
+	transition: background 0.1s;
+}
+
+.fs-type-row:hover,
+.fs-type-row--active {
+	background: #27272a;
+}
+
+.fs-type-meta {
+	flex: 0 0 110px;
+}
+
+.fs-type-name {
+	display: block;
+	font-family: var(--fs-mono);
+	font-size: 11px;
+	color: var(--fs-insp-accent);
+}
+
+.fs-type-px {
+	display: block;
+	font-size: 10px;
+	color: #52525b;
+}
+
+.fs-type-sample {
+	flex: 1;
+	font-family: Georgia, 'Times New Roman', serif;
+	color: var(--fs-preview-text);
+	line-height: 1;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ */
+/* Space specimen tab                                                    */
+/* ------------------------------------------------------------------ */
+
+.fs-space-list {
+	padding: 8px 0;
+}
+
+.fs-space-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 5px 16px;
+	cursor: pointer;
+	transition: background 0.1s;
+}
+
+.fs-space-row:hover,
+.fs-space-row--active {
+	background: #27272a;
+}
+
+.fs-space-meta {
+	flex: 0 0 110px;
+}
+
+.fs-space-name {
+	display: block;
+	font-family: var(--fs-mono);
+	font-size: 11px;
+	color: var(--fs-insp-accent);
+}
+
+.fs-space-px {
+	display: block;
+	font-size: 10px;
+	color: #52525b;
+}
+
+.fs-space-bar-wrap {
+	flex: 1;
+}
+
+.fs-space-bar {
+	height: 10px;
+	background: #3f3f46;
+	border-radius: 2px;
+	position: relative;
+	overflow: hidden;
+}
+
+.fs-space-bar-fill {
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 100%;
+	background: var(--fs-insp-accent);
+	opacity: 0.6;
+	border-radius: 2px;
+	transition: width 0.2s ease;
 }

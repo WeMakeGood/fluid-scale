@@ -57,23 +57,22 @@ class AdminPage {
 			FLUID_SCALE_VERSION
 		);
 
+		// Alpine must load before admin.js registers its x-data component.
+		// defer is added automatically by WordPress for scripts in the footer.
+		wp_enqueue_script(
+			'alpine',
+			FLUID_SCALE_URL . 'assets/js/alpine.min.js',
+			[],
+			'3.14.9',
+			true
+		);
+
 		wp_enqueue_script(
 			'fluid-scale-admin',
 			FLUID_SCALE_URL . 'assets/js/admin.js',
-			[],
+			[ 'alpine' ],
 			FLUID_SCALE_VERSION,
-			true // Load in footer
-		);
-
-		// Pass PHP data to JS for the live preview.
-		wp_localize_script(
-			'fluid-scale-admin',
-			'fluidScaleAdmin',
-			[
-				'spaceSteps'   => Generator::space_step_names(),
-				'defaultPairs' => $this->get_one_up_pair_keys(),
-				'nonce'        => wp_create_nonce( 'fluid_scale_preview' ),
-			]
+			true
 		);
 	}
 
@@ -188,13 +187,4 @@ class AdminPage {
 		return [];
 	}
 
-	/**
-	 * Return one-up pair keys for JS (e.g. ['3xs-2xs', '2xs-xs', ...]).
-	 */
-	private function get_one_up_pair_keys(): array {
-		return array_map(
-			fn( $pair ) => $pair[0] . '-' . $pair[1],
-			Generator::ONE_UP_PAIRS
-		);
-	}
 }
