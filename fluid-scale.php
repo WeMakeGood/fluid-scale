@@ -35,7 +35,9 @@ spl_autoload_register( function ( string $class ): void {
 	}
 
 	$relative = substr( $class, strlen( 'FluidScale\\' ) );
-	$filename = 'class-' . strtolower( str_replace( [ '\\', '_' ], [ '/', '-' ], $relative ) ) . '.php';
+	// Convert CamelCase to kebab-case, then handle namespace separators and underscores.
+	$kebab    = preg_replace( '/([a-z])([A-Z])/', '$1-$2', $relative );
+	$filename = 'class-' . strtolower( str_replace( [ '\\', '_' ], [ '/', '-' ], $kebab ) ) . '.php';
 
 	$locations = [
 		FLUID_SCALE_DIR . 'includes/' . $filename,
