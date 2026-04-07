@@ -1,0 +1,167 @@
+/**
+ * Fluid Scale Admin Styles
+ */
+
+/* ------------------------------------------------------------------ */
+/* Page wrap                                                            */
+/* ------------------------------------------------------------------ */
+
+.fluid-scale-wrap {
+	max-width: 1100px;
+}
+
+.fluid-scale-wrap h2 {
+	margin-top: 2em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Status line                                                          */
+/* ------------------------------------------------------------------ */
+
+.fluid-scale-status {
+	padding: 6px 12px;
+	border-radius: 3px;
+	display: inline-block;
+	font-size: 13px;
+}
+
+.fluid-scale-status--ok {
+	background: #edfaef;
+	color: #1a7038;
+	border: 1px solid #b3dfbb;
+}
+
+.fluid-scale-status--warn {
+	background: #fff8e5;
+	color: #8a6d00;
+	border: 1px solid #f0d080;
+}
+
+/* ------------------------------------------------------------------ */
+/* Custom pairs                                                         */
+/* ------------------------------------------------------------------ */
+
+#fs-custom-pairs {
+	margin-bottom: 0.75em;
+}
+
+.fs-pair-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.fs-pair-row select {
+	min-width: 140px;
+}
+
+.fs-pair-arrow {
+	color: #757575;
+	font-size: 16px;
+	line-height: 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* Preview                                                              */
+/* ------------------------------------------------------------------ */
+
+#fs-preview {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 2em;
+	margin-bottom: 2em;
+}
+
+@media ( max-width: 900px ) {
+	#fs-preview {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Type specimen */
+
+.fs-specimen-row {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 8px 0;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.fs-specimen-row:last-child {
+	border-bottom: none;
+}
+
+.fs-specimen-meta {
+	flex: 0 0 280px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.fs-specimen-name {
+	font-size: 12px;
+	color: #1d2327;
+	font-weight: 600;
+}
+
+.fs-specimen-px {
+	font-size: 11px;
+	color: #757575;
+}
+
+.fs-specimen-clamp {
+	font-size: 10px;
+	color: #a0a0a0;
+	word-break: break-all;
+}
+
+.fs-specimen-text {
+	font-family: Georgia, serif;
+	line-height: 1.1;
+	color: #1d2327;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 200px;
+}
+
+/* Space scale */
+
+.fs-space-row {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 6px 0;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.fs-space-row:last-child {
+	border-bottom: none;
+}
+
+.fs-space-meta {
+	flex: 0 0 200px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.fs-space-bar-wrap {
+	flex: 1;
+	overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ */
+/* Generated CSS output                                                 */
+/* ------------------------------------------------------------------ */
+
+#fs-css-output {
+	font-family: Consolas, Monaco, monospace;
+	font-size: 12px;
+	background: #f6f7f7;
+	color: #1d2327;
+	border: 1px solid #dcdcde;
+	resize: vertical;
+}
