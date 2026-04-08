@@ -25,7 +25,8 @@ $alpine_init = wp_json_encode( [
 	'maxVp'          => (int)    $settings['max_viewport'],
 	'minBase'        => (float)  $settings['min_base'],
 	'maxBase'        => (float)  $settings['max_base'],
-	'ratio'          => (string) $settings['ratio'],
+	'minRatio'       => number_format( (float) $settings['min_ratio'], 3, '.', '' ),
+	'maxRatio'       => number_format( (float) $settings['max_ratio'], 3, '.', '' ),
 	'negSteps'       => (int)    $settings['negative_steps'],
 	'posSteps'       => (int)    $settings['positive_steps'],
 	'gridMaxWidth'   => (int)    $settings['grid_max_width'],
@@ -95,7 +96,8 @@ $alpine_init = wp_json_encode( [
 				<input type="hidden" name="fluid_scale[max_viewport]"    :value="maxVp">
 				<input type="hidden" name="fluid_scale[min_base]"        :value="minBase">
 				<input type="hidden" name="fluid_scale[max_base]"        :value="maxBase">
-				<input type="hidden" name="fluid_scale[ratio]"           :value="ratio">
+				<input type="hidden" name="fluid_scale[min_ratio]"      :value="minRatio">
+				<input type="hidden" name="fluid_scale[max_ratio]"      :value="maxRatio">
 				<input type="hidden" name="fluid_scale[negative_steps]"  :value="negSteps">
 				<input type="hidden" name="fluid_scale[positive_steps]"  :value="posSteps">
 				<input type="hidden" name="fluid_scale[grid_max_width]"  :value="gridMaxWidth">
@@ -174,25 +176,44 @@ $alpine_init = wp_json_encode( [
 				<div class="fs-panel">
 					<div class="fs-panel-header">
 						<h2 class="fs-panel-title"><?php esc_html_e( 'Scale Ratio', 'fluid-scale' ); ?></h2>
-						<p class="fs-panel-desc"><?php esc_html_e( 'How much bigger each heading step gets', 'fluid-scale' ); ?></p>
+						<p class="fs-panel-desc"><?php esc_html_e( 'How much bigger each heading step gets — fluid between viewports', 'fluid-scale' ); ?></p>
 					</div>
 					<div class="fs-panel-body">
-						<div class="fs-field">
-							<label class="fs-label" for="fs-ratio"><?php esc_html_e( 'Ratio', 'fluid-scale' ); ?></label>
-							<div class="fs-select-wrap">
-								<select id="fs-ratio" class="fs-select" x-model="ratio">
-									<option value="1.067"><?php esc_html_e( 'Minor Second (1.067) — subtle, dense UI', 'fluid-scale' ); ?></option>
-									<option value="1.125"><?php esc_html_e( 'Major Second (1.125) — gentle, content-heavy', 'fluid-scale' ); ?></option>
-									<option value="1.200"><?php esc_html_e( 'Minor Third (1.200) — balanced, safe default', 'fluid-scale' ); ?></option>
-									<option value="1.250"><?php esc_html_e( 'Major Third (1.250) — clear, without drama', 'fluid-scale' ); ?></option>
-									<option value="1.333"><?php esc_html_e( 'Perfect Fourth (1.333) — strong, editorial', 'fluid-scale' ); ?></option>
-									<option value="1.414"><?php esc_html_e( 'Augmented Fourth (1.414) — bold jumps', 'fluid-scale' ); ?></option>
-									<option value="1.500"><?php esc_html_e( 'Perfect Fifth (1.500) — very dramatic', 'fluid-scale' ); ?></option>
-									<option value="1.618"><?php esc_html_e( 'Golden Ratio (1.618) — maximum contrast', 'fluid-scale' ); ?></option>
-								</select>
+						<?php
+						$ratio_options = [
+							'1.067' => __( 'Minor Second (1.067)', 'fluid-scale' ),
+							'1.125' => __( 'Major Second (1.125)', 'fluid-scale' ),
+							'1.200' => __( 'Minor Third (1.200)', 'fluid-scale' ),
+							'1.250' => __( 'Major Third (1.250)', 'fluid-scale' ),
+							'1.333' => __( 'Perfect Fourth (1.333)', 'fluid-scale' ),
+							'1.414' => __( 'Augmented Fourth (1.414)', 'fluid-scale' ),
+							'1.500' => __( 'Perfect Fifth (1.500)', 'fluid-scale' ),
+							'1.618' => __( 'Golden Ratio (1.618)', 'fluid-scale' ),
+						];
+						?>
+						<div class="fs-field-row">
+							<div class="fs-field">
+								<label class="fs-label" for="fs-min-ratio"><?php esc_html_e( 'Mobile ratio', 'fluid-scale' ); ?></label>
+								<div class="fs-select-wrap">
+									<select id="fs-min-ratio" class="fs-select" x-model="minRatio">
+										<?php foreach ( $ratio_options as $val => $label ) : ?>
+										<option value="<?php echo esc_attr( $val ); ?>"><?php echo esc_html( $label ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
 							</div>
-							<p class="fs-help"><?php esc_html_e( 'Watch the preview — the difference between Minor Third and Perfect Fourth is significant. Choose based on how much contrast you want between heading levels.', 'fluid-scale' ); ?></p>
+							<div class="fs-field">
+								<label class="fs-label" for="fs-max-ratio"><?php esc_html_e( 'Desktop ratio', 'fluid-scale' ); ?></label>
+								<div class="fs-select-wrap">
+									<select id="fs-max-ratio" class="fs-select" x-model="maxRatio">
+										<?php foreach ( $ratio_options as $val => $label ) : ?>
+										<option value="<?php echo esc_attr( $val ); ?>"><?php echo esc_html( $label ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+							</div>
 						</div>
+						<p class="fs-help"><?php esc_html_e( 'A smaller mobile ratio keeps heading sizes closer together on small screens. The scale interpolates fluidly between the two — no breakpoints needed.', 'fluid-scale' ); ?></p>
 					</div>
 				</div>
 

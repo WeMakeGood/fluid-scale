@@ -19,7 +19,8 @@ All three share the same viewport parameters (min/max viewport width, min/max ba
 | `max_viewport` | Maximum viewport width in px | 1240 |
 | `min_base` | Base font size in px at min viewport | 16 |
 | `max_base` | Base font size in px at max viewport | 20 |
-| `ratio` | Scale ratio (same for both viewports) | 1.333 (Perfect Fourth) |
+| `min_ratio` | Scale ratio at min viewport (mobile) | 1.200 (Minor Third) |
+| `max_ratio` | Scale ratio at max viewport (desktop) | 1.333 (Perfect Fourth) |
 | `negative_steps` | Steps below base (step--1, step--2, ...) | 2 |
 | `positive_steps` | Steps above base (step-1, step-2, ...) | 5 |
 
@@ -32,8 +33,8 @@ All three share the same viewport parameters (min/max viewport width, min/max ba
 For each step `n` (negative or positive integer):
 
 ```
-min_size_px  = min_base × ratio^n
-max_size_px  = max_base × ratio^n
+min_size_px  = min_base × min_ratio^n
+max_size_px  = max_base × max_ratio^n
 min_size_rem = min_size_px / 16
 max_size_rem = max_size_px / 16
 
@@ -43,6 +44,8 @@ preferred    = {intercept}rem + {slope × 100}vw
 
 output       = clamp({min_size_rem}rem, {preferred}, {max_size_rem}rem)
 ```
+
+Using separate ratios for min and max viewport matches Utopia's calculator exactly. The mobile ratio is typically smaller (e.g. Minor Third 1.200) to keep heading sizes closer together on small screens, while the desktop ratio is larger (e.g. Perfect Fourth 1.333) for more dramatic hierarchy. The clamp() interpolates the two independently calculated sizes — the ratio itself becomes effectively fluid.
 
 Round all values to **4 decimal places**.
 

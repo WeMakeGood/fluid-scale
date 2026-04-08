@@ -28,7 +28,8 @@ class Settings {
 			'max_viewport'     => 1240,
 			'min_base'         => 16.0,
 			'max_base'         => 20.0,
-			'ratio'            => 1.333,
+			'min_ratio'        => 1.200,
+			'max_ratio'        => 1.333,
 			'negative_steps'   => 2,
 			'positive_steps'   => 5,
 			'custom_pairs'     => [],
@@ -106,11 +107,11 @@ class Settings {
 		if ( $min_base <= 0 ) { $min_base = $defaults['min_base']; }
 		if ( $max_base <= 0 ) { $max_base = $defaults['max_base']; }
 
-		// Ratio: float, must be a known valid ratio or within a safe range
-		$ratio = (float) ( $raw['ratio'] ?? $defaults['ratio'] );
-		if ( $ratio < 1.001 || $ratio > 2.0 ) {
-			$ratio = $defaults['ratio'];
-		}
+		// Ratios: floats, must be within a safe range
+		$min_ratio = (float) ( $raw['min_ratio'] ?? $defaults['min_ratio'] );
+		$max_ratio = (float) ( $raw['max_ratio'] ?? $defaults['max_ratio'] );
+		if ( $min_ratio < 1.001 || $min_ratio > 2.0 ) { $min_ratio = $defaults['min_ratio']; }
+		if ( $max_ratio < 1.001 || $max_ratio > 2.0 ) { $max_ratio = $defaults['max_ratio']; }
 
 		// Steps: positive integers, reasonable caps
 		$negative_steps = absint( $raw['negative_steps'] ?? $defaults['negative_steps'] );
@@ -185,7 +186,8 @@ class Settings {
 			'max_viewport'     => $max_vp,
 			'min_base'         => $min_base,
 			'max_base'         => $max_base,
-			'ratio'            => $ratio,
+			'min_ratio'        => $min_ratio,
+			'max_ratio'        => $max_ratio,
 			'negative_steps'   => $negative_steps,
 			'positive_steps'   => $positive_steps,
 			'custom_pairs'     => $custom_pairs,

@@ -35,11 +35,11 @@
 	}
 
 	function typeMinRem( step, p ) {
-		return parseFloat( ( p.minBase * Math.pow( p.ratio, step ) / 16 ).toFixed( 4 ) );
+		return parseFloat( ( p.minBase * Math.pow( p.minRatio, step ) / 16 ).toFixed( 4 ) );
 	}
 
 	function typeMaxRem( step, p ) {
-		return parseFloat( ( p.maxBase * Math.pow( p.ratio, step ) / 16 ).toFixed( 4 ) );
+		return parseFloat( ( p.maxBase * Math.pow( p.maxRatio, step ) / 16 ).toFixed( 4 ) );
 	}
 
 	function typeClamp( step, p ) {
@@ -79,7 +79,8 @@
 			maxVp:         initial.maxVp,
 			minBase:       initial.minBase,
 			maxBase:       initial.maxBase,
-			ratio:         initial.ratio,
+			minRatio:      initial.minRatio,
+			maxRatio:      initial.maxRatio,
 			negSteps:      initial.negSteps,
 			posSteps:      initial.posSteps,
 			gridMaxWidth:  initial.gridMaxWidth,
@@ -100,11 +101,12 @@
 			// ----------------------------------------------------------------
 			get p() {
 				return {
-					minVp:   parseFloat( this.minVp )   || 320,
-					maxVp:   parseFloat( this.maxVp )   || 1240,
-					minBase: parseFloat( this.minBase ) || 16,
-					maxBase: parseFloat( this.maxBase ) || 20,
-					ratio:   parseFloat( this.ratio )   || 1.333,
+					minVp:    parseFloat( this.minVp )    || 320,
+					maxVp:    parseFloat( this.maxVp )    || 1240,
+					minBase:  parseFloat( this.minBase )  || 16,
+					maxBase:  parseFloat( this.maxBase )  || 20,
+					minRatio: parseFloat( this.minRatio ) || 1.200,
+					maxRatio: parseFloat( this.maxRatio ) || 1.333,
 				};
 			},
 

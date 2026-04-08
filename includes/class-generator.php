@@ -126,24 +126,25 @@ class Generator {
 	/**
 	 * Compute the clamp() value for a given type step.
 	 *
-	 * Formula (from docs/utopia-math.md):
-	 *   min_rem  = (min_base × ratio^n) / 16
-	 *   max_rem  = (max_base × ratio^n) / 16
-	 *   slope    = (max_rem - min_rem) / (max_vp - min_vp)
-	 *   intercept = min_rem - slope × min_vp
-	 *   preferred = {intercept}rem + {slope × 100}vw
+	 * Uses separate ratios for min and max viewport, matching Utopia's calculator:
+	 *   min_rem = (min_base × min_ratio^n) / 16
+	 *   max_rem = (max_base × max_ratio^n) / 16
+	 *
+	 * This allows the scale to be more compressed at mobile (smaller min_ratio)
+	 * and more dramatic at desktop (larger max_ratio), independently of the base size.
 	 *
 	 * @param int $step Positive or negative step index.
-	 * @return string  e.g. clamp(1.0000rem, 0.9130rem + 0.2174vw, 1.2500rem)
+	 * @return string  e.g. clamp(1.0000rem, 0.9130rem + 0.4348vw, 1.2500rem)
 	 */
 	private function type_clamp( int $step ): string {
-		$s      = $this->settings;
-		$ratio  = (float) $s['ratio'];
-		$min_vp = (int) $s['min_viewport'];
-		$max_vp = (int) $s['max_viewport'];
+		$s         = $this->settings;
+		$min_ratio = (float) ( $s['min_ratio'] ?? $s['ratio'] ?? 1.200 );
+		$max_ratio = (float) ( $s['max_ratio'] ?? $s['ratio'] ?? 1.333 );
+		$min_vp    = (int) $s['min_viewport'];
+		$max_vp    = (int) $s['max_viewport'];
 
-		$min_rem = round( ( (float) $s['min_base'] * ( $ratio ** $step ) ) / 16, 4 );
-		$max_rem = round( ( (float) $s['max_base'] * ( $ratio ** $step ) ) / 16, 4 );
+		$min_rem = round( ( (float) $s['min_base'] * ( $min_ratio ** $step ) ) / 16, 4 );
+		$max_rem = round( ( (float) $s['max_base'] * ( $max_ratio ** $step ) ) / 16, 4 );
 
 		return $this->build_clamp( $min_rem, $max_rem, $min_vp, $max_vp );
 	}
