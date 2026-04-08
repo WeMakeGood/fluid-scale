@@ -17,7 +17,9 @@ vendor/
 
 # Build artifacts
 assets/css/*.min.css
+# alpine.min.js is a vendored dependency and IS committed — do not ignore it
 assets/js/*.min.js
+!assets/js/alpine.min.js
 
 # Archives / exports
 *.sql
