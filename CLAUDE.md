@@ -54,6 +54,7 @@ Check what's built vs. what's pending by reading the existing files in `includes
 - GitHub CLI: `gh` — authenticated as `cfrazier`, org `wemakegood`
 - Run WP-CLI from: `/Users/chris.frazier.wemakegood.org/Local Sites/plugin-devlocal/app/public`
 - Playwright inspector: `node /Users/chris.frazier.wemakegood.org/Local\ Sites/plugin-devlocal/app/inspect.js`
+- WP admin login: credentials in `/Users/chris.frazier.wemakegood.org/Local Sites/plugin-devlocal/app/.env.local` (not committed) — `WP_USER` and `WP_PASS` env vars for Playwright
 
 ## Testing with Playwright
 
@@ -65,8 +66,8 @@ Use it to verify rendered CSS values, check custom properties on any page, and s
 # Check CSS custom properties on the front end
 node ~/path/to/inspect.js https://plugin-dev.local/sample-page/ --css-vars --screenshot
 
-# Check the admin settings page (auto-logs in)
-node ~/path/to/inspect.js "https://plugin-dev.local/wp-admin/options-general.php?page=fluid-scale" --screenshot --wait 2000
+# Check the admin settings page (credentials from app/.env.local)
+source /Users/chris.frazier.wemakegood.org/Local\ Sites/plugin-devlocal/app/.env.local && node /Users/chris.frazier.wemakegood.org/Local\ Sites/plugin-devlocal/app/inspect.js "https://plugin-dev.local/wp-admin/options-general.php?page=fluid-scale" --screenshot --wait 2500
 
 # Check computed styles for a specific element
 node ~/path/to/inspect.js https://plugin-dev.local/ --selector "h1" --css-vars
