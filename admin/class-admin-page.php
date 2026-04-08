@@ -54,7 +54,7 @@ class AdminPage {
 			'fluid-scale-inter',
 			'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
 			[],
-			null
+			FLUID_SCALE_VERSION
 		);
 
 		wp_enqueue_style(
@@ -111,17 +111,21 @@ class AdminPage {
 
 		check_admin_referer( 'fluid_scale_save_settings', 'fluid_scale_nonce' );
 
-		$raw = $_POST['fluid_scale'] ?? [];
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized inside Settings::save()
+		$post = wp_unslash( $_POST );
+		// phpcs:enable
+
+		$raw = $post['fluid_scale'] ?? [];
 		if ( ! is_array( $raw ) ) {
 			$raw = [];
 		}
 
 		// Parse custom pairs from the paired arrays posted by the form
-		$raw['custom_pairs'] = $this->parse_custom_pairs_from_post( $_POST );
+		$raw['custom_pairs'] = $this->parse_custom_pairs_from_post( $post );
 
 		// Parse divi_mapping from POST
-		$raw['divi_mapping'] = is_array( $_POST['fluid_scale_divi_mapping'] ?? null )
-			? $_POST['fluid_scale_divi_mapping']
+		$raw['divi_mapping'] = is_array( $post['fluid_scale_divi_mapping'] ?? null )
+			? $post['fluid_scale_divi_mapping']
 			: [];
 
 		$settings = Settings::save( $raw );

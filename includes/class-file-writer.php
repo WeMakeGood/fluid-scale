@@ -81,16 +81,21 @@ class FileWriter {
 		$file = $dir . '/' . self::FILENAME;
 		$tmp  = $dir . '/fluid-scale.tmp.css';
 
+		global $wp_filesystem;
+		if ( empty( $wp_filesystem ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			WP_Filesystem();
+		}
+
 		foreach ( [ $file, $tmp ] as $path ) {
-			if ( file_exists( $path ) ) {
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
-				@unlink( $path );
+			if ( $wp_filesystem->exists( $path ) ) {
+				$wp_filesystem->delete( $path );
 			}
 		}
 
-		if ( is_dir( $dir ) ) {
+		if ( $wp_filesystem->is_dir( $dir ) ) {
 			// Only remove if empty after our files are gone
-			@rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+			$wp_filesystem->rmdir( $dir );
 		}
 	}
 

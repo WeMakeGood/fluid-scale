@@ -41,3 +41,5 @@ node_modules
 *.sql
 *.tar.gz
 *.zip
+CLAUDE.md
+docs

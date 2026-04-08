@@ -306,19 +306,16 @@ class Generator {
 
 		$root_block = "/* === Fluid Scale: Grid === */\n:root {\n" . implode( "\n", $root_lines ) . "\n}";
 
-		$utility_classes = <<<CSS
-
-.u-container {
-	max-width: var(--grid-max-width);
-	padding-inline: var(--grid-gutter);
-	margin-inline: auto;
-}
-
-.u-grid {
-	display: grid;
-	gap: var(--grid-gutter);
-}
-CSS;
+		$utility_classes = "\n" .
+			".u-container {\n" .
+			"\tmax-width: var(--grid-max-width);\n" .
+			"\tpadding-inline: var(--grid-gutter);\n" .
+			"\tmargin-inline: auto;\n" .
+			"}\n\n" .
+			".u-grid {\n" .
+			"\tdisplay: grid;\n" .
+			"\tgap: var(--grid-gutter);\n" .
+			"}";
 
 		return $root_block . $utility_classes;
 	}

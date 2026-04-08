@@ -17,6 +17,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// This file is included inside AdminPage::render_page() — all variables below
+// are template-scoped locals, not globals. The sniff fires because the file has
+// no function/class wrapper; suppress it for the whole template.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+
 $space_steps = Generator::space_step_names();
 
 // Encode settings for Alpine x-data initialisation
@@ -56,14 +61,9 @@ $alpine_init = wp_json_encode( [
 	<p class="fs-page-desc">
 		<?php esc_html_e( 'Configure your fluid type, space, and grid system. The preview updates live — save when it feels right.', 'fluid-scale' ); ?>
 		<?php
-		printf(
-			/* translators: %s: link to utopia.fyi */
-			wp_kses(
-				__( 'Math based on the <a href="%s" target="_blank" rel="noopener noreferrer">Utopia</a> fluid design system by James Gilyead and Trys Mudford.', 'fluid-scale' ),
-				[ 'a' => [ 'href' => [], 'target' => [], 'rel' => [] ] ]
-			),
-			'https://utopia.fyi'
-		);
+		/* translators: %s: URL to utopia.fyi */
+		$fs_credit = __( 'Math based on the <a href="%s" target="_blank" rel="noopener noreferrer">Utopia</a> fluid design system by James Gilyead and Trys Mudford.', 'fluid-scale' );
+		printf( wp_kses( $fs_credit, [ 'a' => [ 'href' => [], 'target' => [], 'rel' => [] ] ] ), 'https://utopia.fyi' );
 		?>
 	</p>
 

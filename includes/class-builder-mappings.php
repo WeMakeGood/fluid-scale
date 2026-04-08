@@ -127,21 +127,19 @@ class BuilderMappings {
 		// documents the Fluid Scale variable names so they can be referenced in
 		// Divi's custom CSS interface. Until Divi 5's own design token variable
 		// names are verified, no --divi-* overrides are output.
-		return <<<CSS
-/* === Builder Mapping: Divi 5 === */
-/*
- * Fluid Scale variables are available globally in Divi 5.
- * Use them in Theme Options > Custom CSS or any module's Custom CSS field:
- *
- * Type:  var(--step-0) through var(--step-5), var(--step--1), var(--step--2)
- *        var(--fs-body), var(--fs-h1) ... var(--fs-h6)
- * Space: var(--space-s), var(--space-m), var(--space-l) etc.
- * Grid:  var(--grid-max-width), var(--grid-gutter), var(--grid-columns)
- *
- * TODO: Add --divi-* overrides here once Design Variable names are verified
- * against a live Divi 5 instance. See docs/builder-mappings.md.
- */
-CSS;
+		return "/* === Builder Mapping: Divi 5 === */\n" .
+			"/*\n" .
+			" * Fluid Scale variables are available globally in Divi 5.\n" .
+			" * Use them in Theme Options > Custom CSS or any module's Custom CSS field:\n" .
+			" *\n" .
+			" * Type:  var(--step-0) through var(--step-5), var(--step--1), var(--step--2)\n" .
+			" *        var(--fs-body), var(--fs-h1) ... var(--fs-h6)\n" .
+			" * Space: var(--space-s), var(--space-m), var(--space-l) etc.\n" .
+			" * Grid:  var(--grid-max-width), var(--grid-gutter), var(--grid-columns)\n" .
+			" *\n" .
+			" * TODO: Add --divi-* overrides here once Design Variable names are verified\n" .
+			" * against a live Divi 5 instance. See docs/builder-mappings.md.\n" .
+			" */";
 	}
 
 	// -------------------------------------------------------------------------
@@ -163,24 +161,22 @@ CSS;
 		// TODO: Verify these variable names against a live Bricks Builder instance.
 		// The names below are placeholders based on documented Bricks architecture.
 		// Uncomment and verify each line before enabling.
-		return <<<CSS
-/* === Builder Mapping: Bricks Builder === */
-/*
- * TODO: Uncomment and verify against a live Bricks install before enabling.
- *
- * :root {
- *   --bricks-font-size-base: var(--step-0);
- *   --bricks-font-size-s:    var(--step--1);
- *   --bricks-font-size-xs:   var(--step--2);
- *   --bricks-font-size-m:    var(--step-1);
- *   --bricks-font-size-l:    var(--step-2);
- *   --bricks-font-size-xl:   var(--step-3);
- *   --bricks-font-size-2xl:  var(--step-4);
- *   --bricks-font-size-3xl:  var(--step-5);
- * }
- *
- * See docs/builder-mappings.md for full verification checklist.
- */
-CSS;
+		return "/* === Builder Mapping: Bricks Builder === */\n" .
+			"/*\n" .
+			" * TODO: Uncomment and verify against a live Bricks install before enabling.\n" .
+			" *\n" .
+			" * :root {\n" .
+			" *   --bricks-font-size-base: var(--step-0);\n" .
+			" *   --bricks-font-size-s:    var(--step--1);\n" .
+			" *   --bricks-font-size-xs:   var(--step--2);\n" .
+			" *   --bricks-font-size-m:    var(--step-1);\n" .
+			" *   --bricks-font-size-l:    var(--step-2);\n" .
+			" *   --bricks-font-size-xl:   var(--step-3);\n" .
+			" *   --bricks-font-size-2xl:  var(--step-4);\n" .
+			" *   --bricks-font-size-3xl:  var(--step-5);\n" .
+			" * }\n" .
+			" *\n" .
+			" * See docs/builder-mappings.md for full verification checklist.\n" .
+			" */";
 	}
 }

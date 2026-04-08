@@ -56,12 +56,7 @@ spl_autoload_register( function ( string $class ): void {
  * Bootstrap the plugin.
  */
 function fluid_scale_init(): void {
-	// Load translations.
-	load_plugin_textdomain(
-		'fluid-scale',
-		false,
-		dirname( plugin_basename( __FILE__ ) ) . '/languages'
-	);
+	// Translations load automatically for wp.org-hosted plugins since WP 4.6.
 
 	// Front end: enqueue the generated stylesheet.
 	( new FluidScale\Enqueue() )->init();
