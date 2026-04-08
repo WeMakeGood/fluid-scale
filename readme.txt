@@ -24,7 +24,7 @@ Fluid Scale generates a mathematically coherent set of CSS custom properties bas
 
 = How It Works =
 
-1. Configure your scale in **Settings > Fluid Scale**: set your viewport range, base sizes, ratio, and any custom space pairs.
+1. Configure your scale in **Settings > Fluid Scale**: set your viewport range, base sizes, mobile and desktop ratios, and any custom space pairs.
 2. The plugin calculates the `clamp()` values and writes them to a static CSS file in your uploads directory.
 3. That file is enqueued before your theme loads — every element on every page has access to the variables immediately.
 4. Use the variables in your theme, page builder custom CSS, or any stylesheet: `font-size: var(--step-2);`, `padding: var(--space-m);`
@@ -107,10 +107,7 @@ The math produces identical results to Utopia's calculator. This plugin is not a
 
 == Screenshots ==
 
-1. Settings page — configure viewport range, base sizes, ratio, and custom space pairs.
-2. Type specimen preview — see each step rendered at a representative viewport before saving.
-3. Space scale preview — visual representation of the spacing system.
-4. Generated CSS — the readonly output showing the full set of custom properties.
+1. Settings page with live preview panel — configure viewport range, base sizes, mobile and desktop ratios, custom space pairs, and builder mapping.
 
 == Changelog ==
 

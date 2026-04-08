@@ -196,6 +196,19 @@
 
 				const gw = parseFloat( this.gridMaxWidth ) || 1240;
 				css += `--grid-max-width:${ ( gw / 16 ).toFixed( 4 ) }rem;`;
+
+				// Grid gutter: resolve the selected space pair
+				const gutterPair = ( this.gridGutter || 's-l' ).split( '-' );
+				if ( gutterPair.length === 2 ) {
+					const fromMult = SPACE_MULTIPLIERS[ gutterPair[ 0 ] ];
+					const toMult   = SPACE_MULTIPLIERS[ gutterPair[ 1 ] ];
+					if ( fromMult !== undefined && toMult !== undefined ) {
+						const gutterMin = spaceMinRem( fromMult, p );
+						const gutterMax = spaceMaxRem( toMult, p );
+						css += `--grid-gutter:${ buildClamp( gutterMin, gutterMax, p.minVp, p.maxVp ) };`;
+					}
+				}
+
 				css += '}';
 
 				return css;

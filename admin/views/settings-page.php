@@ -53,7 +53,19 @@ $alpine_init = wp_json_encode( [
 	<?php endforeach; ?>
 
 	<h1><?php esc_html_e( 'Fluid Scale', 'fluid-scale' ); ?></h1>
-	<p class="fs-page-desc"><?php esc_html_e( 'Configure your fluid type, space, and grid system. The preview updates live — save when it feels right.', 'fluid-scale' ); ?></p>
+	<p class="fs-page-desc">
+		<?php esc_html_e( 'Configure your fluid type, space, and grid system. The preview updates live — save when it feels right.', 'fluid-scale' ); ?>
+		<?php
+		printf(
+			/* translators: %s: link to utopia.fyi */
+			wp_kses(
+				__( 'Math based on the <a href="%s" target="_blank" rel="noopener noreferrer">Utopia</a> fluid design system by James Gilyead and Trys Mudford.', 'fluid-scale' ),
+				[ 'a' => [ 'href' => [], 'target' => [], 'rel' => [] ] ]
+			),
+			'https://utopia.fyi'
+		);
+		?>
+	</p>
 
 	<?php if ( $file_exists ) : ?>
 	<span class="fs-status fs-status--ok">
@@ -105,6 +117,15 @@ $alpine_init = wp_json_encode( [
 				<input type="hidden" name="fluid_scale[grid_gutter_pair]" :value="gridGutter">
 				<input type="hidden" name="fluid_scale[builder_mapping]" :value="builderMapping">
 				<!-- Custom pairs submitted as parallel arrays via PHP loop below -->
+
+				<!-- ==================================================== -->
+				<!-- Save (top of form)                                     -->
+				<!-- ==================================================== -->
+				<div class="fs-save-row fs-save-row--top">
+					<button type="submit" class="fs-btn fs-btn--primary fs-btn--wp">
+						<?php esc_html_e( 'Save & Regenerate', 'fluid-scale' ); ?>
+					</button>
+				</div>
 
 				<!-- ==================================================== -->
 				<!-- Viewport Range                                         -->
@@ -410,36 +431,6 @@ $alpine_init = wp_json_encode( [
 				</div>
 				<?php endif; ?>
 
-				<!-- ==================================================== -->
-				<!-- Save                                                    -->
-				<!-- ==================================================== -->
-				<div class="fs-panel">
-					<div class="fs-save-row">
-						<button type="submit" class="fs-btn fs-btn--primary">
-							<?php esc_html_e( 'Save & Regenerate', 'fluid-scale' ); ?>
-						</button>
-					</div>
-				</div>
-
-				<!-- ==================================================== -->
-				<!-- Generated CSS                                           -->
-				<!-- ==================================================== -->
-				<div class="fs-panel" style="margin-top:12px">
-					<div class="fs-panel-header">
-						<h2 class="fs-panel-title"><?php esc_html_e( 'Generated CSS', 'fluid-scale' ); ?></h2>
-						<p class="fs-panel-desc"><?php esc_html_e( 'Read-only — updates on save', 'fluid-scale' ); ?></p>
-					</div>
-					<textarea class="fs-css-output" rows="14" readonly
-						aria-label="<?php esc_attr_e( 'Generated CSS', 'fluid-scale' ); ?>"><?php
-						if ( $file_exists ) {
-							// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-							echo esc_textarea( file_get_contents( FileWriter::get_dir() . '/fluid-scale.css' ) );
-						} else {
-							echo esc_textarea( __( 'No CSS file yet. Save your settings to generate it.', 'fluid-scale' ) );
-						}
-					?></textarea>
-				</div>
-
 			</form>
 		</div><!-- .fs-layout-form -->
 
@@ -617,6 +608,26 @@ $alpine_init = wp_json_encode( [
 				</div>
 
 			</div><!-- .fs-preview-shell -->
+
+			<!-- ==================================================== -->
+			<!-- Generated CSS (right column, below preview)          -->
+			<!-- ==================================================== -->
+			<div class="fs-panel fs-generated-css-panel">
+				<div class="fs-panel-header">
+					<h2 class="fs-panel-title"><?php esc_html_e( 'Generated CSS', 'fluid-scale' ); ?></h2>
+					<p class="fs-panel-desc"><?php esc_html_e( 'Read-only — updates on save', 'fluid-scale' ); ?></p>
+				</div>
+				<textarea class="fs-css-output" rows="14" readonly
+					aria-label="<?php esc_attr_e( 'Generated CSS', 'fluid-scale' ); ?>"><?php
+					if ( $file_exists ) {
+						// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+						echo esc_textarea( file_get_contents( FileWriter::get_dir() . '/fluid-scale.css' ) );
+					} else {
+						echo esc_textarea( __( 'No CSS file yet. Save your settings to generate it.', 'fluid-scale' ) );
+					}
+				?></textarea>
+			</div>
+
 		</div><!-- .fs-preview-col -->
 
 	</div><!-- .fs-layout -->
